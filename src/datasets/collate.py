@@ -16,26 +16,39 @@ def collate_fn(dataset_items: list[dict]) -> dict[str, Any]:
         result_batch (dict[Tensor]): dict, containing batch-version
             of the tensors.
     """
+    spectrograms: list[torch.Tensor] = [
+        item["spectrogram"].squeeze(0)
+        if len(item["spectrogram"].shape) == 3
+        else item["spectrogram"]
+        for item in dataset_items
+    ]
+    text_encoded: list[torch.Tensor] = [
+        item["text_encoded"].squeeze(0)
+        if len(item["text_encoded"].shape) == 2
+        else item["text_encoded"]
+        for item in dataset_items
+    ]
+
     spectrogram_padded = pad_sequence(
-        [item["spectrogram"].transpose(0, 1) for item in dataset_items],
+        [spectrogram.transpose(0, 1) for spectrogram in spectrograms],
         batch_first=True,
         padding_value=0,
         padding_side="right",
     ).transpose(1, 2)  # [B, C, T_max_audio]
 
     spectrogram_lens = torch.tensor(
-        [item["spectrogram"].shape[-1] for item in dataset_items], dtype=torch.long
+        [spectrogram.shape[-1] for spectrogram in spectrograms], dtype=torch.long
     )  # [B]
 
     text_encoded_padded = pad_sequence(
-        [item["text_encoded"] for item in dataset_items],
+        text_encoded,
         batch_first=True,
         padding_value=0,
         padding_side="right",
-    )  # [B, T_max_text]
+    ).long()  # [B, T_max_text]
 
     text_encoded_lens = torch.tensor(
-        [item["text_encoded"].shape[-1] for item in dataset_items], dtype=torch.long
+        [item.shape[-1] for item in text_encoded], dtype=torch.long
     )  # [B]
 
     # For debug and demonstration only. Readme says that we need to show it in logs
