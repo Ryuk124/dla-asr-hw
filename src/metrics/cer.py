@@ -14,12 +14,13 @@ class ArgmaxCERMetric(BaseMetric):
         super().__init__(*args, **kwargs)
         self.text_encoder = text_encoder
 
+    @torch.no_grad()
     def __call__(
         self, log_probs: Tensor, log_probs_length: Tensor, text: list[str], **kwargs
     ):
         cers = []
-        predictions = torch.argmax(log_probs.cpu(), dim=-1).numpy()
-        lengths = log_probs_length.detach().numpy()
+        predictions = torch.argmax(log_probs, dim=-1).cpu().numpy()
+        lengths = log_probs_length.detach().cpu().numpy()
         for log_prob_vec, length, target_text in zip(predictions, lengths, text):
             target_text = self.text_encoder.normalize_text(target_text)
             pred_text = self.text_encoder.ctc_decode(log_prob_vec[:length])

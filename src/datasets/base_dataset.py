@@ -86,11 +86,11 @@ class BaseDataset(Dataset):
         spectrogram = self.get_spectrogram(audio)
 
         instance_data = {
-            "audio": audio,
-            "spectrogram": spectrogram,
-            "text": text,
-            "text_encoded": text_encoded,
-            "audio_path": audio_path,
+            "audio": audio,  # [1, T_raw_audio]
+            "spectrogram": spectrogram,  # [C, T_audio]
+            "text": text,  # str
+            "text_encoded": text_encoded,  # [T_text]
+            "audio_path": audio_path,  # str
         }
 
         # TODO think of how to apply wave augs before calculating spectrogram
