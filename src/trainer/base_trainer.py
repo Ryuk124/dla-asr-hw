@@ -451,7 +451,7 @@ class BaseTrainer:
         """
         if self.writer is None:
             return
-        for metric_name in metric_tracker:
+        for metric_name in metric_tracker.keys():
             self.writer.add_scalar(f"{metric_name}", metric_tracker.avg(metric_name))
 
     def _save_checkpoint(self, epoch, save_best=False, only_best=False):
