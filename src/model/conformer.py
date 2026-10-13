@@ -4,6 +4,36 @@ from torch import nn
 
 # Original Conformer realisation from https://arxiv.org/pdf/2005.08100
 # but without pos embeds and with rmsnorm instead of batch/layer norm everywhere
+class ConformerModel(nn.Module):
+    def __init__(
+        self,
+        d_model: int,
+        n_tokens: int,
+        n_features: int,
+        blocks_amount: int,
+        num_heads: int = 8,
+        dropout: float = 0.1,
+        att_dropout: float = 0.1,
+    ) -> None:
+        super().__init__()
+        self.encoder = ConformerEncoder(
+            d_model=d_model,
+            n_features=n_features,
+            blocks_amount=blocks_amount,
+            num_heads=num_heads,
+            dropout=dropout,
+            att_dropout=att_dropout,
+        )
+
+        self.decoder = nn.Sequential(
+            nn.Linear(d_model, n_tokens), nn.LogSoftmax(dim=-1)
+        )
+
+    def forward(self, spectrogram, spectrogram_length, **batch):
+        x, lengths = self.encoder(spectrogram, spectrogram_length)
+        return {"log_probs": self.decoder(x), "log_probs_length": lengths}
+
+
 class ConformerEncoder(nn.Module):
     """Encode spectrograms with subsampling and Conformer blocks.
 

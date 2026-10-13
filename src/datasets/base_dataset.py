@@ -117,7 +117,7 @@ class BaseDataset(Dataset):
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
         return audio_tensor
 
-    def get_spectrogram(self, audio):
+    def get_spectrogram(self, audio) -> torch.Tensor:
         """
         Special instance transform with a special key to
         get spectrogram from audio.
