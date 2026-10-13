@@ -1,0 +1,8 @@
+_target_: src.model.conformer.ConformerModel
+
+n_features: 128
+d_model: 512
+blocks_amount: 8
+num_heads: 8
+dropout: 0.1
+att_dropout: 0.1
