@@ -1,6 +1,8 @@
 from itertools import repeat
 
 from hydra.utils import instantiate
+import torch
+from torch.utils.data import WeightedRandomSampler
 
 from src.datasets.collate import collate_fn
 from src.utils.init_utils import set_worker_seed
@@ -67,11 +69,30 @@ def get_dataloaders(config, text_encoder, device):
     # dataloaders init
     dataloaders = {}
     for dataset_partition in config.datasets:
-        # dataset partition init
-        dataset = instantiate(
-            config.datasets[dataset_partition], text_encoder=text_encoder
-        )  # instance transforms are defined inside
+        sampler = None
+        if dataset_partition == "train":
+            datasets = []
+            weights = []
+            for source in config.datasets.train.sources:
+                cur_dataset = instantiate(source.dataset, text_encoder=text_encoder)
+                datasets.append(cur_dataset)
 
+                sample_weight = source.weight / len(cur_dataset)
+                weights.extend([sample_weight] * len(cur_dataset))
+
+            dataset = torch.utils.data.ConcatDataset(datasets)
+
+            sampler = WeightedRandomSampler(
+                    weights=weights,
+                    num_samples=len(dataset),
+                    replacement=True,
+            )
+        else:
+            # dataset partition init
+            dataset = instantiate(
+                config.datasets[dataset_partition], text_encoder=text_encoder
+            )  # instance transforms are defined inside
+            
         assert config.dataloader.batch_size <= len(dataset), (
             f"The batch size ({config.dataloader.batch_size}) cannot "
             f"be larger than the dataset length ({len(dataset)})"
@@ -82,8 +103,9 @@ def get_dataloaders(config, text_encoder, device):
             dataset=dataset,
             collate_fn=collate_fn,
             drop_last=(dataset_partition == "train"),
-            shuffle=(dataset_partition == "train"),
+            shuffle=(dataset_partition == "train" and sampler is None),
             worker_init_fn=set_worker_seed,
+            sampler = sampler,
         )
         dataloaders[dataset_partition] = partition_dataloader
 

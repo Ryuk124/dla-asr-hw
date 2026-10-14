@@ -3,7 +3,7 @@ import torch.nn as nn
 import torchaudio.transforms as T
 
 
-# These two doesn't make sense, added for compatibility with the rest of the code
+# These two don't make sense, added for compatibility with the rest of the code
 class FrequencyMasking(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__()
