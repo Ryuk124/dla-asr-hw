@@ -45,10 +45,22 @@ class BaseDataset(Dataset):
             max_test_length (int): maximum allowed text length.
             shuffle_index (bool): if True, shuffle the index. Uses python
                 random package with seed 42.
-            instance_transforms (dict[Callable] | None): transforms that
-                should be applied on the instance. Depend on the
-                tensor name.
+            instance_transforms (dict[str, Callable]): Transform mapping with a
+                required callable "get_spectrogram". Optional "audio" transforms
+                run before feature extraction; optional "spectrogram" transforms
+                run afterwards.
+
+        Raises:
+            ValueError: If instance_transforms is None or "get_spectrogram"
+                is missing or not callable.
         """
+        if instance_transforms is None or not callable(
+            instance_transforms.get("get_spectrogram")
+        ):
+            raise ValueError(
+                "instance_transforms must contain a callable 'get_spectrogram'."
+            )
+
         self._assert_index_is_valid(index)
 
         index = self._filter_records_from_dataset(
@@ -85,6 +97,10 @@ class BaseDataset(Dataset):
         text = data_dict["text"]
         text_encoded = self.text_encoder.encode(text)
 
+        audio_transforms = self.instance_transforms.get("audio")
+        if audio_transforms is not None:
+            audio = audio_transforms(audio)
+
         spectrogram = self.get_spectrogram(audio)
 
         instance_data = {
@@ -95,9 +111,6 @@ class BaseDataset(Dataset):
             "audio_path": audio_path,  # str
         }
 
-        # TODO think of how to apply wave augs before calculating spectrogram
-        # Note: you may want to preserve both audio in time domain and
-        # in time-frequency domain for logging
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
@@ -130,26 +143,23 @@ class BaseDataset(Dataset):
         return self.instance_transforms["get_spectrogram"](audio)
 
     def preprocess_data(self, instance_data):
-        """
-        Preprocess data with instance transforms.
+        """Apply optional spectrogram transforms to a single example.
 
-        Each tensor in a dict undergoes its own transform defined by the key.
+        Audio augmentation and feature extraction have already been performed
+        in __getitem__. This method updates only the "spectrogram" field.
 
         Args:
-            instance_data (dict): dict, containing instance
-                (a single dataset element).
+            instance_data (dict): Example containing a "spectrogram" tensor
+                of shape [1, n_mels, T].
+
         Returns:
-            instance_data (dict): dict, containing instance
-                (a single dataset element) (possibly transformed via
-                instance transform).
+            dict: The same dictionary with its spectrogram transformed in place,
+            or unchanged if no spectrogram transform is configured.
         """
-        if self.instance_transforms is not None:
-            for transform_name in self.instance_transforms:
-                if transform_name == "get_spectrogram":
-                    continue  # skip special key
-                instance_data[transform_name] = self.instance_transforms[
-                    transform_name
-                ](instance_data[transform_name])
+        spec_transforms = self.instance_transforms.get("spectrogram")
+
+        if spec_transforms is not None:
+            instance_data["spectrogram"] = spec_transforms(instance_data["spectrogram"])
         return instance_data
 
     @staticmethod
