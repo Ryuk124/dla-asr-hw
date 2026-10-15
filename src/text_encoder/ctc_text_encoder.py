@@ -2,8 +2,9 @@ import re
 from string import ascii_lowercase
 
 import torch
+import numpy as np
 
-# TODO add BPE, LM, Beam Search support
+# TODO add BPE, LM support
 # Note: think about metrics and encoder
 # The design can be remarkably improved
 # to calculate stuff more efficiently and prettier
@@ -72,6 +73,74 @@ class CTCTextEncoder:
             result += self.ind2char[ind]
 
         return result.strip()
+
+    def beam_search(self, logprobs, beam_size: int = 1) -> str:
+        beams = {
+            (): (0.0, float("-inf"))  # prefx ids: (logp_blank, logp_nonblank)
+        }
+        logprobs = logprobs.detach().float().cpu().numpy()
+
+        for frame_lps in logprobs:
+            next_beams = {}
+            for prefix, (log_p_blank, log_p_nonblank) in beams.items():
+                for token_id, token_logprob in enumerate(frame_lps):
+                    if self.ind2char[token_id] == self.EMPTY_TOK:
+                        old_blank, old_nonblank = next_beams.get(
+                            prefix, (float("-inf"), float("-inf"))
+                        )
+                        blank_score = (
+                            np.logaddexp(log_p_blank, log_p_nonblank) + token_logprob
+                        )
+                        next_beams[prefix] = (
+                            np.logaddexp(old_blank, blank_score),
+                            old_nonblank,
+                        )
+                    else:
+                        if not prefix or prefix[-1] != token_id:
+                            new_prefix = prefix + (token_id,)
+                            score = (
+                                np.logaddexp(log_p_blank, log_p_nonblank)
+                                + token_logprob
+                            )
+
+                            old_blank, old_nonblank = next_beams.get(
+                                new_prefix, (float("-inf"), float("-inf"))
+                            )
+                            next_beams[new_prefix] = (
+                                old_blank,
+                                np.logaddexp(old_nonblank, score),
+                            )
+                        else:
+                            new_prefix = prefix + (token_id,)
+
+                            old_blank, old_nonblank = next_beams.get(
+                                new_prefix, (float("-inf"), float("-inf"))
+                            )
+                            next_beams[new_prefix] = (
+                                old_blank,
+                                np.logaddexp(old_nonblank, log_p_blank + token_logprob),
+                            )
+
+                            old_blank, old_nonblank = next_beams.get(
+                                prefix, (float("-inf"), float("-inf"))
+                            )
+                            next_beams[prefix] = (
+                                old_blank,
+                                np.logaddexp(
+                                    old_nonblank, log_p_nonblank + token_logprob
+                                ),
+                            )
+
+            beams = dict(
+                sorted(
+                    next_beams.items(),
+                    key=lambda item: np.logaddexp(*item[1]),
+                    reverse=True,
+                )[:beam_size]
+            )
+
+        best_prefix = max(beams, key=lambda prefix: np.logaddexp(*beams[prefix]))
+        return self.decode(best_prefix)
 
     @staticmethod
     def normalize_text(text: str):
