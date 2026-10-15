@@ -1,9 +1,10 @@
 import torch
-from torch import nn
+from torch import Tensor, nn
+from torchtune.modules import RotaryPositionalEmbeddings
 
 
 # Original Conformer realisation from https://arxiv.org/pdf/2005.08100
-# but without pos embeds and with rmsnorm instead of batch/layer norm everywhere
+# but with rmsnorm instead of batch/layer norm everywhere and rope instead of sinusoidal pos embeds
 class ConformerModel(nn.Module):
     def __init__(
         self,
@@ -175,7 +176,7 @@ class ConformerBlock(nn.Module):
         super().__init__()
         self.ffn1 = FeedForwardBlock(d_model=d_model, dropout=dropout)
         self.mhsa = MultiHeadAttentionBlock(
-            d_model=d_model, num_heads=num_heads, att_dropout=att_dropout
+            d_model=d_model, num_heads=num_heads, dropout=att_dropout
         )
         self.conv = ConvolutionalModule(d_model=d_model, dropout=dropout)
         self.ffn2 = FeedForwardBlock(d_model=d_model, dropout=dropout)
@@ -298,43 +299,97 @@ class ConvolutionalModule(nn.Module):
 
 
 class MultiHeadAttentionBlock(nn.Module):
-    """Apply pre-norm self-attention with dropout and a residual connection.
+    """Apply pre-norm self-attention with RoPE and a residual connection.
+
+    Rotary positional embeddings are applied to queries and keys within each
+    head. Attention is bidirectional; padded keys are excluded when a mask
+    is provided.
 
     Args:
-        d_model: Feature dimension, divisible by num_heads.
+        d_model: Input and output feature dimension. Must be divisible by
+            num_heads, with an even dimension per head.
         num_heads: Number of attention heads. Defaults to 8.
-        att_dropout: Dropout probability for attention weights and the attention
-            module output. Defaults to 0.1.
+        max_pos_enc_len: Maximum supported sequence length after subsampling.
+            Defaults to 4096.
+        dropout: Dropout probability for attention weights and the output
+            projection. Defaults to 0.1.
+        bias: Whether to include biases in the QKV and output projections.
+            Defaults to False.
     """
 
     def __init__(
-        self, d_model: int, num_heads: int = 8, att_dropout: float = 0.1
-    ) -> None:
+        self,
+        d_model: int,
+        num_heads: int = 8,
+        max_pos_enc_len: int = 4096,
+        dropout: float = 0.1,
+        bias: bool = False,
+    ):
         super().__init__()
+        assert d_model % num_heads == 0
+        self.d_model = d_model
+        self.num_heads = num_heads
+        self.head_dim = d_model // num_heads
+        self.max_pos_enc_len = max_pos_enc_len
+        assert self.head_dim % 2 == 0
 
-        self.norm = nn.RMSNorm(normalized_shape=d_model)
-        self.att = nn.MultiheadAttention(
-            embed_dim=d_model,
-            num_heads=num_heads,
-            batch_first=True,
-            dropout=att_dropout,
+        self.qkv_proj = nn.Linear(d_model, 3 * d_model, bias=bias)
+        self.out_proj = nn.Linear(d_model, d_model, bias=bias)
+
+        self.norm = nn.RMSNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+        self.dropout_p = dropout
+
+        self.rope = RotaryPositionalEmbeddings(
+            dim=self.head_dim,
+            max_seq_len=self.max_pos_enc_len,
+            base=10000,
         )
-        self.dropout = nn.Dropout(p=att_dropout)
 
-    def forward(self, x, key_padding_mask):
-        """Apply self-attention with padded keys excluded.
+    def forward(
+        self,
+        x: Tensor,
+        key_padding_mask: Tensor | None = None,
+    ):
+        """Apply rotary self-attention while preserving the input shape.
 
         Args:
-            x (torch.Tensor): Features of shape [B, T, d_model].
-            key_padding_mask (torch.Tensor): Boolean mask of shape [B, T], on
-                the same device as x. True marks padded key positions.
+            x (Tensor): Input features of shape [B, T, d_model].
+            key_padding_mask (Tensor | None): Boolean mask of shape [B, T],
+                on the same device as x. True marks padded keys that attention
+                must ignore. Defaults to None.
 
         Returns:
-            torch.Tensor: Features of shape [B, T, d_model], including residual.
-            Padded query positions are not guaranteed to have zero output.
+            Tensor: Features of shape [B, T, d_model], including the residual
+            connection. Padded query positions are not guaranteed to be zero.
         """
-        residual = x
-        x = self.norm(x)
-        x, _ = self.att(x, x, x, need_weights=False, key_padding_mask=key_padding_mask)
-        x = self.dropout(x)
-        return x + residual
+        x_norm = self.norm(x)
+        attn_mask = (
+            ~key_padding_mask[:, None, None, :]
+            if key_padding_mask is not None
+            else None
+        )
+
+        q, k, v = self.qkv_proj(x_norm).chunk(3, dim=-1)
+        B, T, D = q.shape
+        q = q.reshape(B, T, self.num_heads, self.head_dim) # [B, T, H, h_dim]
+        k = k.reshape(B, T, self.num_heads, self.head_dim)
+        v = v.reshape(B, T, self.num_heads, self.head_dim)
+
+        q = self.rope(q)
+        k = self.rope(k)
+
+        q = q.transpose(1, 2) # [B, H, T, head_dim]
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+
+        out = nn.functional.scaled_dot_product_attention(
+            q, k, v, attn_mask=attn_mask, dropout_p=self.dropout_p if self.training else 0.0
+        )
+
+        out = out.transpose(1, 2).reshape(B, T, D)
+        out = self.out_proj(out)
+        out = self.dropout(out)
+
+        return out + x
+
