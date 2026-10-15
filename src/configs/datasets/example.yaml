@@ -1,9 +1,15 @@
 train:
   sources:
-    - weight: 1.0
+    - weight: 0.5
       dataset:
         _target_: src.datasets.LibrispeechDataset
         part: "train-clean-100"
+        instance_transforms: ${transforms.instance_transforms.train}
+    - weight: 0.5
+      dataset:
+        _target_: src.datasets.CommonVoiceDataset
+        data_dir: data/datasets/common_voice_17_en_300h
+        split: train
         instance_transforms: ${transforms.instance_transforms.train}
 val:
   _target_: src.datasets.LibrispeechDataset

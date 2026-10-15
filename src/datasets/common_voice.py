@@ -1,50 +1,76 @@
+import csv
 import json
-import re
 from pathlib import Path
 
 import soundfile as sf
 from tqdm import tqdm
 
-from datasets import load_dataset
 from src.datasets.base_dataset import BaseDataset
+from src.text_encoder import CTCTextEncoder
 from src.utils.io_utils import ROOT_PATH
 
 
 class CommonVoiceDataset(BaseDataset):
-    def __init__(self, split, *args, **kwargs):
-        self._data_dir = ROOT_PATH / "dataset_common_voice"
-        self._regex = re.compile("[^a-z ]")
-        self._dataset = load_dataset(
-            "mozilla-foundation/common_voice_11_0",
-            "en",
-            cache_dir=self._data_dir,
-            split=split,
-        )
+    def __init__(self, data_dir, split = "train", **kwargs):
+        data_dir = Path(data_dir).expanduser()
+        self._data_dir = (ROOT_PATH / data_dir).resolve()
+        if not self._data_dir.is_dir():
+            raise FileNotFoundError(
+                f"Common Voice directory not found: {self._data_dir}"
+            )
+
         index = self._get_or_load_index(split)
-        super().__init__(index, *args, **kwargs)
+        index = [
+            {**entry, "path": str(self._data_dir / "clips" / Path(entry["path"]).name)}
+            for entry in index
+        ]
+        super().__init__(index, **kwargs)
 
     def _get_or_load_index(self, split):
         index_path = self._data_dir / f"{split}_index.json"
-        if index_path.exists():
-            with index_path.open() as f:
-                index = json.load(f)
-        else:
-            index = []
-            for entry in tqdm(self._dataset):
-                assert "path" in entry
-                assert Path(entry["path"]).exists(), (
-                    f"Path {entry['path']} doesn't exist"
+        if index_path.is_file():
+            with index_path.open(encoding="utf-8") as file:
+                return json.load(file)
+
+        tsv_path = self._data_dir / f"{split}.tsv"
+        if not tsv_path.is_file():
+            raise FileNotFoundError(
+                f"Common Voice split {split!r} requires {index_path} or {tsv_path}."
+            )
+
+        index = self._build_index(tsv_path)
+        temporary_path = index_path.with_suffix(".json.tmp")
+        with temporary_path.open("w", encoding="utf-8") as file:
+            json.dump(index, file, ensure_ascii=False, indent=2)
+        temporary_path.replace(index_path)
+        return index
+
+    def _build_index(self, tsv_path):
+        index = []
+        with tsv_path.open(encoding="utf-8", newline="") as file:
+            reader = csv.DictReader(file, delimiter="\t")
+            if not {"path", "sentence"}.issubset(reader.fieldnames or []):
+                raise ValueError(
+                    f"{tsv_path} must contain 'path' and 'sentence' columns."
                 )
-                entry["path"] = str(Path(entry["path"]).absolute().resolve())
-                entry["text"] = self._regex.sub("", entry.get("sentence", "").lower())
-                entry["audio_len"] = sf.info(entry["path"]).duration
+
+            for entry in tqdm(reader, desc=f"Indexing Common Voice {tsv_path.stem}"):
+                text = CTCTextEncoder.normalize_text(entry["sentence"] or "")
+                if not text.strip():
+                    continue
+                audio_path = self._data_dir / "clips" / entry["path"]
+                if not audio_path.is_file():
+                    raise FileNotFoundError(
+                        f"Common Voice audio not found: {audio_path}"
+                    )
                 index.append(
                     {
-                        "path": entry["path"],
-                        "text": entry["text"],
-                        "audio_len": entry["audio_len"],
+                        "path": audio_path.name,
+                        "text": text,
+                        "audio_len": sf.info(audio_path).duration,
                     }
                 )
-            with index_path.open("w") as f:
-                json.dump(index, f, indent=2)
+
+        if not index:
+            raise ValueError(f"No usable transcripts found in {tsv_path}.")
         return index
