@@ -39,7 +39,7 @@ class CTCTextEncoder:
             labels=labels,
             kenlm_model_path=(
                 "/storage/lam-tts-resources-2/experiments/VTTS-4688/"
-                "librispeech_lm/3-gram.pruned.1e-7.arpa"
+                "librispeech_lm/4-gram.arpa"
             ),
             alpha=0.5,
             beta=1.0,
