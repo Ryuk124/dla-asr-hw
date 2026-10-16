@@ -2,6 +2,8 @@ import heapq
 import re
 from string import ascii_lowercase
 
+from pyctcdecode import build_ctcdecoder
+
 import numpy as np
 import torch
 
@@ -29,6 +31,19 @@ class CTCTextEncoder:
 
         self.ind2char = dict(enumerate(self.vocab))
         self.char2ind = {v: k for k, v in self.ind2char.items()}
+
+        labels = [self.ind2char[i] for i in range(len(self.ind2char))]
+        labels = ["" if token == self.EMPTY_TOK else token.upper() for token in labels]
+
+        self.lm_decoder = build_ctcdecoder(
+            labels=labels,
+            kenlm_model_path=(
+                "/storage/lam-tts-resources-2/experiments/VTTS-4688/"
+                "librispeech_lm/3-gram.pruned.1e-7.arpa"
+            ),
+            alpha=0.5,
+            beta=1.0,
+        )
 
     def __len__(self):
         return len(self.vocab)
@@ -75,6 +90,7 @@ class CTCTextEncoder:
 
         return result.strip()
 
+    # My own beam search implementation. More basic realisation was in commit 7ec7c8f4660ed8bd099a38da1a6f3fde647ab527
     def beam_search(
         self, logprobs, beam_size: int = 1, token_top_k: int | None = None
     ) -> str:
@@ -170,6 +186,14 @@ class CTCTextEncoder:
 
         best_prefix = max(beams, key=lambda prefix: logaddexp(*beams[prefix]))
         return self.decode(best_prefix)
+
+    def beam_search_lm(self, logprobs, beam_size: int = 1) -> str:
+            logprobs = logprobs.detach().float().cpu().numpy()
+            text = self.lm_decoder.decode(
+                logprobs,
+                beam_width=beam_size,
+            )
+            return self.normalize_text(text)
 
     @staticmethod
     def normalize_text(text: str):

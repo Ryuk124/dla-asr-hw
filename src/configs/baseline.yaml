@@ -22,6 +22,8 @@ text_encoder:
   _target_: src.text_encoder.CTCTextEncoder
 trainer:
   log_step: 50
+  full_eval_period: 5
+  test_partitions: [test, test_other]
   n_epochs: 50
   epoch_len: 200
   device_tensors: ["spectrogram", "text_encoded"] # which tensors should be on device (ex. GPU)

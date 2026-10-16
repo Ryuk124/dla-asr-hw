@@ -6,6 +6,7 @@ from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
 
 from src.datasets.data_utils import inf_loop
+from src.metrics.beam_search import BeamSearchMetric
 from src.metrics.tracker import MetricTracker
 from src.utils.io_utils import ROOT_PATH
 
@@ -94,6 +95,15 @@ class BaseTrainer:
         self.start_epoch = 1
         self.epochs = self.cfg_trainer.n_epochs
 
+        self.full_eval_period = self.cfg_trainer.get("full_eval_period", 1)
+        if (
+            isinstance(self.full_eval_period, bool)
+            or not isinstance(self.full_eval_period, int)
+            or self.full_eval_period < 1
+        ):
+            raise ValueError("trainer.full_eval_period must be a positive integer")
+        self.test_partitions = set(self.cfg_trainer.get("test_partitions", []))
+
         # configuration to monitor model performance and save best
 
         self.save_period = (
@@ -124,11 +134,6 @@ class BaseTrainer:
             *self.config.writer.loss_names,
             "grad_norm",
             *[m.name for m in self.metrics["train"]],
-            writer=self.writer,
-        )
-        self.evaluation_metrics = MetricTracker(
-            *self.config.writer.loss_names,
-            *[m.name for m in self.metrics["inference"]],
             writer=self.writer,
         )
 
@@ -245,14 +250,37 @@ class BaseTrainer:
 
         logs = last_train_metrics
 
-        # Run val/test
-        for part, dataloader in self.evaluation_dataloaders.items():
-            val_logs = self._evaluation_epoch(epoch, part, dataloader)
-            logs.update(**{f"{part}_{name}": value for name, value in val_logs.items()})
-
+        logs.update(self._evaluate(epoch))
         return logs
 
-    def _evaluation_epoch(self, epoch, part, dataloader):
+    def _evaluate(self, epoch):
+        """Evaluate validation every epoch and tests on full-evaluation epochs.
+
+        Args:
+            epoch (int): Current epoch, numbered from one.
+
+        Returns:
+            dict: Partition-prefixed losses and metrics actually computed.
+                Beam metrics and test partitions run every full_eval_period
+                epochs and on the final configured epoch.
+        """
+        full_eval = epoch % self.full_eval_period == 0 or epoch == self.epochs
+        metric_funcs = [
+            metric
+            for metric in self.metrics["inference"]
+            if full_eval or not isinstance(metric, BeamSearchMetric)
+        ]
+        logs = {}
+        for part, dataloader in self.evaluation_dataloaders.items():
+            if part in self.test_partitions and not full_eval:
+                continue
+            part_logs = self._evaluation_epoch(
+                epoch, part, dataloader, metric_funcs=metric_funcs
+            )
+            logs.update({f"{part}_{name}": value for name, value in part_logs.items()})
+        return logs
+
+    def _evaluation_epoch(self, epoch, part, dataloader, metric_funcs=None):
         """
         Evaluate model on the partition after training for an epoch.
 
@@ -260,12 +288,20 @@ class BaseTrainer:
             epoch (int): current training epoch.
             part (str): partition to evaluate on
             dataloader (DataLoader): dataloader for the partition.
+            metric_funcs (list | None): Metrics to compute. None uses all
+                configured inference metrics.
         Returns:
             logs (dict): logs that contain the information about evaluation.
         """
         self.is_train = False
         self.model.eval()
-        self.evaluation_metrics.reset()
+        if metric_funcs is None:
+            metric_funcs = self.metrics["inference"]
+        evaluation_metrics = MetricTracker(
+            *self.config.writer.loss_names,
+            *[metric.name for metric in metric_funcs],
+            writer=self.writer,
+        )
         with torch.no_grad():
             for batch_idx, batch in tqdm(
                 enumerate(dataloader),
@@ -274,15 +310,16 @@ class BaseTrainer:
             ):
                 batch = self.process_batch(
                     batch,
-                    metrics=self.evaluation_metrics,
+                    metrics=evaluation_metrics,
+                    metric_funcs=metric_funcs,
                 )
             self.writer.set_step(epoch * self.epoch_len, part)
-            self._log_scalars(self.evaluation_metrics)
+            self._log_scalars(evaluation_metrics)
             self._log_batch(
                 batch_idx, batch, part
             )  # log only the last batch during inference
 
-        return self.evaluation_metrics.result()
+        return evaluation_metrics.result()
 
     def _monitor_performance(self, logs, not_improved_count):
         """
@@ -451,8 +488,8 @@ class BaseTrainer:
         """
         if self.writer is None:
             return
-        for metric_name in metric_tracker.keys():
-            self.writer.add_scalar(f"{metric_name}", metric_tracker.avg(metric_name))
+        for metric_name, value in metric_tracker.result().items():
+            self.writer.add_scalar(metric_name, value)
 
     def _save_checkpoint(self, epoch, save_best=False, only_best=False):
         """

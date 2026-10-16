@@ -44,10 +44,9 @@ class BeamSearchMetric(BaseMetric):
         predictions = log_probs.detach().float().cpu()
         lengths = log_probs_length.detach().cpu().tolist()
         return [
-            self.text_encoder.beam_search(
+            self.text_encoder.beam_search_lm(
                 sample[:length],
                 beam_size=self.beam_size,
-                token_top_k=self.token_top_k,
             )
             for sample, length in zip(predictions, lengths)
         ]

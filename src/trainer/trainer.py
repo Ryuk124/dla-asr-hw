@@ -14,7 +14,7 @@ class Trainer(BaseTrainer):
     Trainer class. Defines the logic of batch logging and processing.
     """
 
-    def process_batch(self, batch, metrics: MetricTracker):
+    def process_batch(self, batch, metrics: MetricTracker, metric_funcs=None):
         """
         Run batch through the model, compute metrics, compute loss,
         and do training step (during training stage).
@@ -28,6 +28,8 @@ class Trainer(BaseTrainer):
             metrics (MetricTracker): MetricTracker object that computes
                 and aggregates the metrics. The metrics depend on the type of
                 the partition (train or inference).
+            metric_funcs (list | None): Explicit metrics for this batch. None
+                selects the configured train or inference metrics.
         Returns:
             batch (dict): dict-based batch containing the data from
                 the dataloader (possibly transformed via batch transform),
@@ -36,9 +38,9 @@ class Trainer(BaseTrainer):
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
 
-        metric_funcs = self.metrics["inference"]
+        if metric_funcs is None:
+            metric_funcs = self.metrics["train" if self.is_train else "inference"]
         if self.is_train:
-            metric_funcs = self.metrics["train"]
             self.optimizer.zero_grad()
 
         outputs = self.model(**batch)
