@@ -2,6 +2,8 @@ train:
   get_spectrogram: # special key for getting spectrogram
     _target_: src.transforms.LogMelSpectrogram
     sample_rate: 16000
+    normalize: True
+    n_mels: 80
   audio: # name of the tensor on which we apply transform
     _target_: torchvision.transforms.v2.Compose
     transforms:
@@ -36,3 +38,5 @@ inference:
   get_spectrogram:
     _target_: src.transforms.LogMelSpectrogram
     sample_rate: 16000
+    normalize: True
+    n_mels: 80

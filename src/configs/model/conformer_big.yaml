@@ -1,6 +1,6 @@
 _target_: src.model.conformer.ConformerModel
 
-n_features: 128
+n_features: 80
 d_model: 512
 blocks_amount: 8
 num_heads: 8
