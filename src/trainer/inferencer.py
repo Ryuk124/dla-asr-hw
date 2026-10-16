@@ -1,6 +1,7 @@
 import torch
 from tqdm.auto import tqdm
 
+from src.metrics.beam_search import prepare_beam_predictions
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
@@ -130,6 +131,7 @@ class Inferencer(BaseTrainer):
         batch.update(outputs)
 
         if metrics is not None:
+            prepare_beam_predictions(batch, self.metrics["inference"])
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
 

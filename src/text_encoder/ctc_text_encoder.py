@@ -1,8 +1,9 @@
+import heapq
 import re
 from string import ascii_lowercase
 
-import torch
 import numpy as np
+import torch
 
 # TODO add BPE, LM support
 # Note: think about metrics and encoder
@@ -74,72 +75,100 @@ class CTCTextEncoder:
 
         return result.strip()
 
-    def beam_search(self, logprobs, beam_size: int = 1) -> str:
-        beams = {
-            (): (0.0, float("-inf"))  # prefx ids: (logp_blank, logp_nonblank)
-        }
+    def beam_search(
+        self, logprobs, beam_size: int = 1, token_top_k: int | None = None
+    ) -> str:
+        """Decode one utterance with CTC prefix beam search.
+
+        Args:
+            logprobs: Tensor of shape [T, vocab_size], without padded frames.
+                Values are log probabilities, including the blank token.
+            beam_size: Number of prefixes retained after each frame.
+            token_top_k: Maximum number of top-scoring tokens considered per
+                frame, plus blank if absent. None considers the full vocabulary.
+                Pruning is approximate and can change the decoded text.
+
+        Returns:
+            str: The most probable retained prefix converted to text.
+
+        Raises:
+            ValueError: If a beam/pruning size is invalid or the input shape
+                does not match the vocabulary.
+        """
+        if (
+            not isinstance(beam_size, int)
+            or isinstance(beam_size, bool)
+            or beam_size < 1
+        ):
+            raise ValueError("beam_size must be a positive integer")
+        if token_top_k is not None and (
+            not isinstance(token_top_k, int)
+            or isinstance(token_top_k, bool)
+            or token_top_k < 1
+        ):
+            raise ValueError("token_top_k must be a positive integer or None")
+        if logprobs.ndim != 2 or logprobs.shape[1] != len(self):
+            raise ValueError("logprobs must have shape [T, vocab_size]")
+
         logprobs = logprobs.detach().float().cpu().numpy()
+        blank_id = self.char2ind[self.EMPTY_TOK]
+        empty_scores = (float("-inf"), float("-inf"))
+        beams = {(): (0.0, float("-inf"))}
+        full_vocabulary = range(len(self))
+        logaddexp = np.logaddexp
 
         for frame_lps in logprobs:
+            if token_top_k is None or token_top_k >= len(self):
+                token_ids = full_vocabulary
+            else:
+                token_ids = np.argpartition(frame_lps, -token_top_k)[-token_top_k:]
+                # Keep blank and a stable token order for deterministic ties.
+                token_ids = sorted(set(token_ids.tolist()) | {blank_id})
+            candidates = [
+                (token_id, float(frame_lps[token_id])) for token_id in token_ids
+            ]
             next_beams = {}
+
             for prefix, (log_p_blank, log_p_nonblank) in beams.items():
-                for token_id, token_logprob in enumerate(frame_lps):
-                    if self.ind2char[token_id] == self.EMPTY_TOK:
-                        old_blank, old_nonblank = next_beams.get(
-                            prefix, (float("-inf"), float("-inf"))
-                        )
-                        blank_score = (
-                            np.logaddexp(log_p_blank, log_p_nonblank) + token_logprob
-                        )
+                log_p_total = logaddexp(log_p_blank, log_p_nonblank)
+                last_token = prefix[-1] if prefix else None
+
+                for token_id, token_logprob in candidates:
+                    if token_id == blank_id:
+                        old_blank, old_nonblank = next_beams.get(prefix, empty_scores)
                         next_beams[prefix] = (
-                            np.logaddexp(old_blank, blank_score),
+                            logaddexp(old_blank, log_p_total + token_logprob),
                             old_nonblank,
                         )
-                    else:
-                        if not prefix or prefix[-1] != token_id:
-                            new_prefix = prefix + (token_id,)
-                            score = (
-                                np.logaddexp(log_p_blank, log_p_nonblank)
-                                + token_logprob
-                            )
+                        continue
 
-                            old_blank, old_nonblank = next_beams.get(
-                                new_prefix, (float("-inf"), float("-inf"))
-                            )
-                            next_beams[new_prefix] = (
-                                old_blank,
-                                np.logaddexp(old_nonblank, score),
-                            )
-                        else:
-                            new_prefix = prefix + (token_id,)
+                    # A repeated token extends the prefix only after blank.
+                    source_score = (
+                        log_p_blank if token_id == last_token else log_p_total
+                    )
+                    new_prefix = prefix + (token_id,)
+                    old_blank, old_nonblank = next_beams.get(new_prefix, empty_scores)
+                    next_beams[new_prefix] = (
+                        old_blank,
+                        logaddexp(old_nonblank, source_score + token_logprob),
+                    )
 
-                            old_blank, old_nonblank = next_beams.get(
-                                new_prefix, (float("-inf"), float("-inf"))
-                            )
-                            next_beams[new_prefix] = (
-                                old_blank,
-                                np.logaddexp(old_nonblank, log_p_blank + token_logprob),
-                            )
-
-                            old_blank, old_nonblank = next_beams.get(
-                                prefix, (float("-inf"), float("-inf"))
-                            )
-                            next_beams[prefix] = (
-                                old_blank,
-                                np.logaddexp(
-                                    old_nonblank, log_p_nonblank + token_logprob
-                                ),
-                            )
+                    if token_id == last_token:
+                        old_blank, old_nonblank = next_beams.get(prefix, empty_scores)
+                        next_beams[prefix] = (
+                            old_blank,
+                            logaddexp(old_nonblank, log_p_nonblank + token_logprob),
+                        )
 
             beams = dict(
-                sorted(
+                heapq.nlargest(
+                    beam_size,
                     next_beams.items(),
-                    key=lambda item: np.logaddexp(*item[1]),
-                    reverse=True,
-                )[:beam_size]
+                    key=lambda item: logaddexp(*item[1]),
+                )
             )
 
-        best_prefix = max(beams, key=lambda prefix: np.logaddexp(*beams[prefix]))
+        best_prefix = max(beams, key=lambda prefix: logaddexp(*beams[prefix]))
         return self.decode(best_prefix)
 
     @staticmethod

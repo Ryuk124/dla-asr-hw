@@ -2,6 +2,7 @@ import torch
 from torch import Tensor
 
 from src.metrics.base_metric import BaseMetric
+from src.metrics.beam_search import BeamSearchMetric
 from src.metrics.utils import calc_cer
 
 # TODO add lm versions
@@ -27,25 +28,24 @@ class ArgmaxCERMetric(BaseMetric):
             cers.append(calc_cer(target_text, pred_text))
         return sum(cers) / len(cers)
 
-class BeamSearchCERMetric(BaseMetric):
-    def __init__(self, text_encoder, beam_size, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.text_encoder = text_encoder
-        self.beam_size = beam_size
+
+class BeamSearchCERMetric(BeamSearchMetric):
+    """Compute mean utterance CER from shared beam predictions."""
 
     @torch.no_grad()
     def __call__(
-        self, log_probs: Tensor, log_probs_length: Tensor, text: list[str], **kwargs
+        self,
+        log_probs: Tensor,
+        log_probs_length: Tensor,
+        text: list[str],
+        beam_predictions=None,
+        **kwargs,
     ):
-        cers = []
-        predictions = log_probs.detach().float().cpu()
-        lengths = log_probs_length.detach().cpu().tolist()
-
-        for log_prob_vec, length, target_text in zip(predictions, lengths, text):
-            target_text = self.text_encoder.normalize_text(target_text)
-            pred_text = self.text_encoder.beam_search(
-                log_prob_vec[:length], self.beam_size
-            )
-            cers.append(calc_cer(target_text, pred_text))
-
-        return sum(cers) / len(cers)
+        predictions = self.get_predictions(
+            log_probs, log_probs_length, beam_predictions
+        )
+        errors = [
+            calc_cer(self.text_encoder.normalize_text(target), prediction)
+            for target, prediction in zip(text, predictions)
+        ]
+        return sum(errors) / len(errors)

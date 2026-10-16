@@ -5,6 +5,12 @@ train:
         _target_: src.datasets.LibrispeechDataset
         part: "train-clean-100"
         instance_transforms: ${transforms.instance_transforms.train}
+    - weight: 5.0 # clean:other sampling ratio = 1:5
+      dataset:
+        _target_: src.datasets.LibrispeechDataset
+        part: "train-other-500"
+        data_dir: /storage/lam-tts-resources-2/experiments/VTTS-4688/librispeech_train_other_500/LibriSpeech
+        instance_transforms: ${transforms.instance_transforms.train}
     - weight: 0.0
       dataset:
         _target_: src.datasets.CommonVoiceDataset
@@ -18,4 +24,9 @@ val:
 test:
   _target_: src.datasets.LibrispeechDataset
   part: "test-clean"
+  instance_transforms: ${transforms.instance_transforms.inference}
+
+test_other:
+  _target_: src.datasets.LibrispeechDataset
+  part: "test-other"
   instance_transforms: ${transforms.instance_transforms.inference}

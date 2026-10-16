@@ -7,6 +7,8 @@ inference: # metrics that are calculated during inference (eval)
   - _target_: src.metrics.cer.BeamSearchCERMetric
     name: "CER_(Beam)"
     beam_size: 10
+    token_top_k: 10 # null disables approximate token pruning
   - _target_: src.metrics.wer.BeamSearchWERMetric
     name: "WER_(Beam)"
     beam_size: 10
+    token_top_k: 10 # null disables approximate token pruning

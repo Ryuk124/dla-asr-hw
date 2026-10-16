@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.logger.utils import plot_spectrogram
+from src.metrics.beam_search import prepare_beam_predictions
 from src.metrics.tracker import MetricTracker
 from src.metrics.utils import calc_cer, calc_wer
 from src.trainer.base_trainer import BaseTrainer
@@ -57,6 +58,7 @@ class Trainer(BaseTrainer):
         for loss_name in self.config.writer.loss_names:
             metrics.update(loss_name, batch[loss_name].item())
 
+        prepare_beam_predictions(batch, metric_funcs)
         for met in metric_funcs:
             metrics.update(met.name, met(**batch))
         return batch
@@ -90,11 +92,16 @@ class Trainer(BaseTrainer):
         self.writer.add_image("spectrogram", image)
 
     def log_predictions(
-        self, text, log_probs, log_probs_length, audio_path, examples_to_log=10, **batch
+        self,
+        text,
+        log_probs,
+        log_probs_length,
+        audio_path,
+        examples_to_log=10,
+        beam_predictions=None,
+        **batch,
     ):
-        # TODO add beam search
-        # Note: by improving text encoder and metrics design
-        # this logging can also be improved significantly
+        # Reuse beam texts computed for metrics; logging never runs another search.
 
         argmax_inds = log_probs.cpu().argmax(-1).cpu().numpy()
         argmax_inds = [
@@ -106,7 +113,9 @@ class Trainer(BaseTrainer):
         tuples = list(zip(argmax_texts, text, argmax_texts_raw, audio_path))
 
         rows = {}
-        for pred, target, raw_pred, new_audio_path in tuples[:examples_to_log]:
+        for i, (pred, target, raw_pred, new_audio_path) in enumerate(
+            tuples[:examples_to_log]
+        ):
             target = self.text_encoder.normalize_text(target)
             wer = calc_wer(target, pred) * 100
             cer = calc_cer(target, pred) * 100
@@ -118,6 +127,19 @@ class Trainer(BaseTrainer):
                 "wer": wer,
                 "cer": cer,
             }
+            for (beam_size, token_top_k), predictions in (
+                beam_predictions or {}
+            ).items():
+                label = f"beam={beam_size}, top_k={token_top_k}"
+                beam_text = predictions[i]
+                rows[Path(new_audio_path).name].update(
+                    {
+                        f"prediction ({label})": beam_text,
+                        f"wer ({label})": calc_wer(target, beam_text) * 100,
+                        f"cer ({label})": calc_cer(target, beam_text) * 100,
+                    }
+                )
+
         self.writer.add_table(
             "predictions", pd.DataFrame.from_dict(rows, orient="index")
         )
