@@ -5,7 +5,6 @@ from src.metrics.base_metric import BaseMetric
 from src.metrics.beam_search import BeamSearchMetric
 from src.metrics.utils import calc_wer
 
-# TODO beam search / LM versions
 # Note: they can be written in a pretty way
 # Note 2: overall metric design can be significantly improved
 

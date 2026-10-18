@@ -1,0 +1,22 @@
+defaults:
+- baseline
+- _self_
+text_encoder:
+  lm_path: /storage/lam-tts-resources-2/experiments/VTTS-4688/librispeech_lm/4-gram.arpa
+  lm_alpha: 0.8
+  lm_beta: 1.0
+  beam_prune_logp: -12.0
+  token_min_logp: -7.0
+metrics:
+  train: []
+  inference:
+  - _target_: src.metrics.ArgmaxCERMetric
+    name: CER_(Argmax)
+  - _target_: src.metrics.ArgmaxWERMetric
+    name: WER_(Argmax)
+  - _target_: src.metrics.cer.BeamSearchCERMetric
+    name: CER_(BeamLM)
+    beam_size: 500
+  - _target_: src.metrics.wer.BeamSearchWERMetric
+    name: WER_(BeamLM)
+    beam_size: 500

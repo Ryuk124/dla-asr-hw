@@ -1,0 +1,19 @@
+defaults:
+  - lm_rescored
+  - override /model: conformer_big
+  - override /datasets: librispeech_eval
+  - _self_
+
+model:
+  blocks_amount: 16
+
+dataloader:
+  batch_size: 16
+  num_workers: 4
+
+inferencer:
+  device_tensors: [spectrogram, text_encoded]
+  device: cuda
+  save_path: conformer_16blocks_rescored
+  seed: 1
+  from_pretrained: /storage/lam-tts-resources-2/experiments/VTTS-4688/asr_checkpoints/conformer_16blocks_90ep_01/model_best.pth

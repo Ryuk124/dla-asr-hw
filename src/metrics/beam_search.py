@@ -14,16 +14,27 @@ class BeamSearchMetric(BaseMetric):
         **kwargs: Keyword arguments for BaseMetric.
     """
 
-    def __init__(self, text_encoder, beam_size, *args, token_top_k=None, **kwargs):
+    def __init__(
+        self,
+        text_encoder,
+        beam_size,
+        *args,
+        token_top_k=None,
+        rescore=False,
+        nbest_size=100,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.text_encoder = text_encoder
         self.beam_size = beam_size
         self.token_top_k = token_top_k
+        self.rescore = rescore
+        self.nbest_size = nbest_size
 
     @property
     def decoding_key(self):
         """Return the settings identifying a shared prediction list."""
-        return self.beam_size, self.token_top_k
+        return self.beam_size, self.token_top_k, self.rescore, self.nbest_size
 
     @torch.no_grad()
     def get_predictions(self, log_probs, log_probs_length, beam_predictions=None):
@@ -43,6 +54,14 @@ class BeamSearchMetric(BaseMetric):
 
         predictions = log_probs.detach().float().cpu()
         lengths = log_probs_length.detach().cpu().tolist()
+        if self.rescore:
+            hypotheses = [
+                self.text_encoder.beam_search_nbest(
+                    sample[:length], self.beam_size, self.nbest_size
+                )
+                for sample, length in zip(predictions, lengths)
+            ]
+            return self.text_encoder.rescore(hypotheses)
         return [
             self.text_encoder.beam_search_lm(
                 sample[:length],

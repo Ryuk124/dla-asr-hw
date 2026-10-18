@@ -129,10 +129,12 @@ class Trainer(BaseTrainer):
                 "wer": wer,
                 "cer": cer,
             }
-            for (beam_size, token_top_k), predictions in (
+            for (beam_size, token_top_k, rescore, nbest_size), predictions in (
                 beam_predictions or {}
             ).items():
                 label = f"beam={beam_size}, top_k={token_top_k}"
+                if rescore:
+                    label += f", rescore={nbest_size}"
                 beam_text = predictions[i]
                 rows[Path(new_audio_path).name].update(
                     {

@@ -2,12 +2,11 @@ import heapq
 import re
 from string import ascii_lowercase
 
-from pyctcdecode import build_ctcdecoder
-
 import numpy as np
 import torch
+from pyctcdecode import build_ctcdecoder
 
-# TODO add BPE, LM support
+# TODO add BPE
 # Note: think about metrics and encoder
 # The design can be remarkably improved
 # to calculate stuff more efficiently and prettier
@@ -16,11 +15,27 @@ import torch
 class CTCTextEncoder:
     EMPTY_TOK = ""
 
-    def __init__(self, alphabet=None, **kwargs):
+    def __init__(
+        self,
+        alphabet=None,
+        lm_path=None,
+        lm_alpha=0.5,
+        lm_beta=1.0,
+        beam_prune_logp=-10.0,
+        token_min_logp=-5.0,
+        rescorer=None,
+        **kwargs,
+    ):
         """
         Args:
             alphabet (list): alphabet for language. If None, it will be
-                set to ascii
+                set to ascii.
+            lm_path (str | None): KenLM model path. Defaults to the shared
+                LibriSpeech 4-gram model.
+            lm_alpha (float): Language model score weight.
+            lm_beta (float): Word insertion bonus.
+            beam_prune_logp (float): Beam score pruning threshold.
+            token_min_logp (float): Token log-probability pruning threshold.
         """
 
         if alphabet is None:
@@ -37,13 +52,17 @@ class CTCTextEncoder:
 
         self.lm_decoder = build_ctcdecoder(
             labels=labels,
-            kenlm_model_path=(
+            kenlm_model_path=lm_path
+            or (
                 "/storage/lam-tts-resources-2/experiments/VTTS-4688/"
                 "librispeech_lm/4-gram.arpa"
             ),
-            alpha=0.5,
-            beta=1.0,
+            alpha=lm_alpha,
+            beta=lm_beta,
         )
+        self.beam_prune_logp = beam_prune_logp
+        self.token_min_logp = token_min_logp
+        self.rescorer = rescorer
 
     def __len__(self):
         return len(self.vocab)
@@ -188,12 +207,49 @@ class CTCTextEncoder:
         return self.decode(best_prefix)
 
     def beam_search_lm(self, logprobs, beam_size: int = 1) -> str:
+        logprobs = logprobs.detach().float().cpu().numpy()
+        text = self.lm_decoder.decode(
+            logprobs,
+            beam_width=beam_size,
+            beam_prune_logp=self.beam_prune_logp,
+            token_min_logp=self.token_min_logp,
+        )
+        return self.normalize_text(text)
+
+    def beam_search_nbest(self, logprobs, beam_size=1000, nbest_size=100):
+        if not 1 <= nbest_size <= beam_size:
+            raise ValueError("Expected 1 <= nbest_size <= beam_size")
+        if isinstance(logprobs, torch.Tensor):
             logprobs = logprobs.detach().float().cpu().numpy()
-            text = self.lm_decoder.decode(
-                logprobs,
-                beam_width=beam_size,
+        beams = self.lm_decoder.decode_beams(
+            logprobs,
+            beam_width=beam_size,
+            beam_prune_logp=self.beam_prune_logp,
+            token_min_logp=self.token_min_logp,
+            prune_history=False,
+        )
+        hypotheses = []
+        seen = set()
+        for text, _, _, acoustic_score, beam_score in beams:
+            text = self.normalize_text(text)
+            if text in seen:
+                continue
+            seen.add(text)
+            hypotheses.append(
+                {
+                    "text": text,
+                    "acoustic_score": float(acoustic_score),
+                    "beam_score": float(beam_score),
+                }
             )
-            return self.normalize_text(text)
+            if len(hypotheses) == nbest_size:
+                break
+        return hypotheses
+
+    def rescore(self, hypotheses):
+        if self.rescorer is None:
+            raise ValueError("Set text_encoder.rescorer to enable N-best rescoring")
+        return self.rescorer(hypotheses)
 
     @staticmethod
     def normalize_text(text: str):

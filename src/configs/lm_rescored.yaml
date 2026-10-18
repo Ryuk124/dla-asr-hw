@@ -1,0 +1,29 @@
+defaults:
+- lm_tuned
+- _self_
+text_encoder:
+  rescorer:
+    _target_: src.text_encoder.lm_rescorer.NBestRescorer
+    model_dir: /storage/k-stakheev-devbox/llm_spec/259_asr_nbest_rescoring/transformer_lm
+    neural_weight: 1.2
+    ngram_weight: 0.0
+    word_bonus: -0.75
+    batch_size: 64
+    device: cuda
+metrics:
+  train: []
+  inference:
+  - _target_: src.metrics.ArgmaxCERMetric
+    name: CER_(Argmax)
+  - _target_: src.metrics.ArgmaxWERMetric
+    name: WER_(Argmax)
+  - _target_: src.metrics.cer.BeamSearchCERMetric
+    name: CER_(Rescore)
+    beam_size: 1000
+    nbest_size: 100
+    rescore: true
+  - _target_: src.metrics.wer.BeamSearchWERMetric
+    name: WER_(Rescore)
+    beam_size: 1000
+    nbest_size: 100
+    rescore: true

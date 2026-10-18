@@ -1,0 +1,16 @@
+val:
+  _target_: src.datasets.LibrispeechDataset
+  part: dev-clean
+  instance_transforms: ${transforms.instance_transforms.inference}
+val_other:
+  _target_: src.datasets.LibrispeechDataset
+  part: dev-other
+  instance_transforms: ${transforms.instance_transforms.inference}
+test:
+  _target_: src.datasets.LibrispeechDataset
+  part: test-clean
+  instance_transforms: ${transforms.instance_transforms.inference}
+test_other:
+  _target_: src.datasets.LibrispeechDataset
+  part: test-other
+  instance_transforms: ${transforms.instance_transforms.inference}
