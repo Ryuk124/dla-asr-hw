@@ -1,3 +1,5 @@
+import json
+
 import torch
 from tqdm.auto import tqdm
 
@@ -121,9 +123,6 @@ class Inferencer(BaseTrainer):
                 the dataloader (possibly transformed via batch transform)
                 and model outputs.
         """
-        # TODO change inference logic so it suits ASR assignment
-        # and task pipeline
-
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
 
@@ -135,29 +134,28 @@ class Inferencer(BaseTrainer):
             for met in self.metrics["inference"]:
                 metrics.update(met.name, met(**batch))
 
-        # Some saving logic. This is an example
-        # Use if you need to save predictions on disk
-
-        batch_size = batch["logits"].shape[0]
-        current_id = batch_idx * batch_size
-
-        for i in range(batch_size):
-            # clone because of
-            # https://github.com/pytorch/pytorch/issues/1995
-            logits = batch["logits"][i].clone()
-            label = batch["labels"][i].clone()
-            pred_label = logits.argmax(dim=-1)
-
-            output_id = current_id + i
-
-            output = {
-                "pred_label": pred_label,
-                "label": label,
-            }
-
-            if self.save_path is not None:
-                # you can use safetensors or other lib here
-                torch.save(output, self.save_path / part / f"output_{output_id}.pth")
+        if self.save_path is not None:
+            lengths = batch["log_probs_length"].cpu().tolist()
+            tokens = batch["log_probs"].argmax(-1).cpu().tolist()
+            with (self.save_path / part / "predictions.jsonl").open("a") as handle:
+                for i, length in enumerate(lengths):
+                    output = {
+                        "audio_path": str(batch["audio_path"][i]),
+                        "reference": batch["text"][i],
+                        "greedy": self.text_encoder.ctc_decode(tokens[i][:length]),
+                        "beam_predictions": [
+                            {
+                                "beam_size": key[0],
+                                "rescore": key[2],
+                                "nbest_size": key[3],
+                                "text": predictions[i],
+                            }
+                            for key, predictions in batch.get(
+                                "beam_predictions", {}
+                            ).items()
+                        ],
+                    }
+                    handle.write(json.dumps(output) + "\n")
 
         return batch
 
@@ -180,6 +178,7 @@ class Inferencer(BaseTrainer):
         # create Save dir
         if self.save_path is not None:
             (self.save_path / part).mkdir(exist_ok=True, parents=True)
+            (self.save_path / part / "predictions.jsonl").write_text("")
 
         with torch.no_grad():
             for batch_idx, batch in tqdm(
