@@ -7,6 +7,7 @@ from omegaconf import OmegaConf
 
 from src.datasets.data_utils import get_dataloaders
 from src.trainer import Trainer
+from src.utils.checkpoint import load_encoder
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -22,6 +23,14 @@ def main(config):
     Args:
         config (DictConfig): hydra experiment config.
     """
+    encoder_checkpoint = config.trainer.get("encoder_checkpoint")
+    if encoder_checkpoint and (
+        config.trainer.get("resume_from") or config.trainer.get("from_pretrained")
+    ):
+        raise ValueError(
+            "Use encoder_checkpoint separately from resume_from/from_pretrained"
+        )
+
     set_random_seed(config.trainer.seed)
 
     project_config = OmegaConf.to_container(config)
@@ -42,6 +51,9 @@ def main(config):
 
     # build model architecture, then print to console
     model = instantiate(config.model, n_tokens=len(text_encoder)).to(device)
+    if encoder_checkpoint:
+        load_encoder(model, encoder_checkpoint)
+        logger.info(f"Loaded encoder from {encoder_checkpoint}")
     logger.info(model)
 
     # get function handles of loss and metrics

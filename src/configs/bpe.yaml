@@ -1,0 +1,45 @@
+defaults:
+  - baseline
+  - override /model: conformer_extra_big
+  - override /datasets: librispeech
+  - _self_
+
+text_encoder:
+  _target_: src.text_encoder.BPETextEncoder
+  model_path: tokenizers/librispeech_bpe_1024.model
+  use_lm: false
+
+dataloader:
+  batch_size: 16
+  num_workers: 4
+
+optimizer:
+  lr: 1e-4
+
+lr_scheduler:
+  max_lr: 1e-4
+  pct_start: 0.1
+
+loss_function:
+  zero_infinity: true
+
+metrics:
+  train: []
+  inference:
+    - _target_: src.metrics.ArgmaxCERMetric
+      name: CER_(Argmax)
+    - _target_: src.metrics.ArgmaxWERMetric
+      name: WER_(Argmax)
+
+trainer:
+  device: cuda
+  n_epochs: 30
+  epoch_len: 1000
+  max_grad_norm: 5.0
+  save_period: 10
+  monitor: min val_other_WER_(Argmax)
+  resume_from: null
+  encoder_checkpoint: /storage/lam-tts-resources-2/experiments/VTTS-4688/asr_checkpoints/conformer_16blocks_90ep_01/model_best.pth
+
+writer:
+  run_name: conformer_bpe1024_01

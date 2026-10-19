@@ -6,11 +6,6 @@ import numpy as np
 import torch
 from pyctcdecode import build_ctcdecoder
 
-# TODO add BPE
-# Note: think about metrics and encoder
-# The design can be remarkably improved
-# to calculate stuff more efficiently and prettier
-
 
 class CTCTextEncoder:
     EMPTY_TOK = ""
@@ -24,6 +19,7 @@ class CTCTextEncoder:
         beam_prune_logp=-10.0,
         token_min_logp=-5.0,
         rescorer=None,
+        use_lm=True,
         **kwargs,
     ):
         """
@@ -52,11 +48,15 @@ class CTCTextEncoder:
 
         self.lm_decoder = build_ctcdecoder(
             labels=labels,
-            kenlm_model_path=lm_path
-            or (
-                "/storage/lam-tts-resources-2/experiments/VTTS-4688/"
-                "librispeech_lm/4-gram.arpa"
-            ),
+            kenlm_model_path=(
+                lm_path
+                or (
+                    "/storage/lam-tts-resources-2/experiments/VTTS-4688/"
+                    "librispeech_lm/4-gram.arpa"
+                )
+            )
+            if use_lm
+            else None,
             alpha=lm_alpha,
             beta=lm_beta,
         )
@@ -96,18 +96,15 @@ class CTCTextEncoder:
         return "".join([self.ind2char[int(ind)] for ind in inds]).strip()
 
     def ctc_decode(self, inds) -> str:
-        result = ""
-
-        for i, ind in enumerate(inds):
-            if self.ind2char[ind] == self.EMPTY_TOK:
-                continue
-
-            if i > 0 and ind == inds[i - 1]:
-                continue
-
-            result += self.ind2char[ind]
-
-        return result.strip()
+        result = []
+        previous = None
+        blank_id = self.char2ind[self.EMPTY_TOK]
+        for ind in inds:
+            ind = int(ind)
+            if ind != blank_id and ind != previous:
+                result.append(ind)
+            previous = ind
+        return self.decode(result)
 
     # My own beam search implementation. More basic realisation was in commit 7ec7c8f4660ed8bd099a38da1a6f3fde647ab527
     def beam_search(
