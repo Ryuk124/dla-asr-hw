@@ -108,6 +108,7 @@ class BaseDataset(Dataset):
             "spectrogram": spectrogram,  # [1, C, T_audio]
             "text": text,  # str
             "text_encoded": text_encoded,  # [1, T_text]
+            "has_transcription": data_dict.get("has_transcription", True),
             "audio_path": audio_path,  # str
         }
 

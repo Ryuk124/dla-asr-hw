@@ -72,6 +72,9 @@ def collate_fn(dataset_items: list[dict]) -> dict[str, Any]:
         "text_encoded_length": text_encoded_lens,
         "text": [item["text"] for item in dataset_items],
         "audio_path": [item["audio_path"] for item in dataset_items],
+        "has_transcription": [
+            item.get("has_transcription", True) for item in dataset_items
+        ],
     }
 
     return batch

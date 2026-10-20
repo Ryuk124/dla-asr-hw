@@ -23,6 +23,8 @@ class NBestRescorer:
         self.ngram_weight = ngram_weight
         self.word_bonus = word_bonus
         self.batch_size = batch_size
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
         self.model = None
         self.tokenizer = None

@@ -5,7 +5,7 @@ defaults:
 
 trainer:
   encoder_checkpoint: null
-  from_pretrained: /storage/lam-tts-resources-2/experiments/VTTS-4688/asr_checkpoints/conformer_bpe1024_01/model_best.pth
+  from_pretrained: saved/conformer_bpe1024_01/model_best.pth
 
 writer:
   run_name: conformer_bpe1024_960h_01

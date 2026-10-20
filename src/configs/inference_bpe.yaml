@@ -5,7 +5,12 @@ defaults:
 
 inferencer:
   device_tensors: [spectrogram, text_encoded]
-  device: cuda
-  save_path: conformer_bpe1024
+  device: auto
+  save_path: data/saved/conformer_bpe1024
   seed: 1
-  from_pretrained: ${trainer.save_dir}/${writer.run_name}/model_best.pth
+  from_pretrained: saved/conformer_bpe1024_960h_01/model_best.pth
+  decoding:
+    method: greedy
+    beam_size: 1000
+    token_top_k: null
+    nbest_size: 100

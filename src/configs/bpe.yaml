@@ -39,7 +39,7 @@ trainer:
   save_period: 10
   monitor: min val_other_WER_(Argmax)
   resume_from: null
-  encoder_checkpoint: /storage/lam-tts-resources-2/experiments/VTTS-4688/asr_checkpoints/conformer_16blocks_90ep_01/model_best.pth
+  encoder_checkpoint: saved/conformer_16blocks_90ep_01/model_best.pth
 
 writer:
   run_name: conformer_bpe1024_01

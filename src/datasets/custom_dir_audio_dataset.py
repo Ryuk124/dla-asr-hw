@@ -10,6 +10,7 @@ class CustomDirAudioDataset(BaseDataset):
         audio_dir = Path(audio_dir)
         transcription_dir = Path(transcription_dir) if transcription_dir else None
         data = []
+        utterance_ids = set()
 
         for path in sorted(audio_dir.iterdir()):
             if not path.is_file() or path.suffix.lower() not in (
@@ -20,16 +21,21 @@ class CustomDirAudioDataset(BaseDataset):
             ):
                 continue
 
+            if path.stem in utterance_ids:
+                raise ValueError(f"Duplicate utterance ID: {path.stem}")
+            utterance_ids.add(path.stem)
             info = sf.info(path)
             entry = {
                 "path": str(path),
                 "text": "",
+                "has_transcription": False,
                 "audio_len": info.frames / info.samplerate,
             }
 
             if transcription_dir is not None:
                 transc_path = transcription_dir / (path.stem + ".txt")
                 if transc_path.is_file():
+                    entry["has_transcription"] = True
                     entry["text"] = transc_path.read_text(encoding="utf-8").strip()
 
             data.append(entry)

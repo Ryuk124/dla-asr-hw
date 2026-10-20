@@ -3,19 +3,19 @@ defaults:
 - _self_
 text_encoder:
   use_lm: true
-  lm_path: /storage/lam-tts-resources-2/experiments/VTTS-4688/librispeech_lm/4-gram.arpa
+  lm_path: data/lm/4-gram.arpa
   lm_alpha: 0.8
   lm_beta: 1.0
   beam_prune_logp: -12.0
   token_min_logp: -7.0
   rescorer:
     _target_: src.text_encoder.lm_rescorer.NBestRescorer
-    model_dir: /storage/k-stakheev-devbox/llm_spec/259_asr_nbest_rescoring/transformer_lm
+    model_dir: data/lm/transformer_lm
     neural_weight: 0.8
     ngram_weight: 0.0
     word_bonus: 1.25
     batch_size: 64
-    device: cuda
+    device: ${inferencer.device}
 metrics:
   train: []
   inference:
@@ -34,4 +34,9 @@ metrics:
     nbest_size: 100
     rescore: true
 inferencer:
-  save_path: conformer_bpe1024_rescored
+  save_path: data/saved/conformer_bpe1024_rescored
+  decoding:
+    method: rescore
+    beam_size: 1000
+    token_top_k: null
+    nbest_size: 100

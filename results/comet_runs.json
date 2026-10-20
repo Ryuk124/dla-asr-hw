@@ -1,0 +1,307 @@
+{
+  "checked_on": "2026-10-20",
+  "source": "Authenticated Comet UI: Experiments, Archive, Metrics, Hyperparameters, Output; saved config.yaml and info.log for later runs",
+  "project_count": 23,
+  "archive_count": 0,
+  "notes": [
+    "Comet Crashed badge also appears after manual interruption; see per-run note.",
+    "current_step_displayed is the project table field, not a guaranteed optimizer step count. For debug_02 it is 800 while a training metric exists at step 950.",
+    "Early Metrics Last values have UI display precision; Output values retain logged precision.",
+    "WER/CER are fractions, not percentages. Early logged metrics are not corpus metrics."
+  ],
+  "runs": [
+    {
+      "name": "conformer_bpe1024_960h_01",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/k514yjd81hafadiwj9jx0qq1wvepn96j",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 30000,
+      "duration_displayed": "01:40:00",
+      "server_end_time_displayed": "10/19/26 02:16 AM",
+      "note": "Продолжение BPE на 960 часах. Завершены 30 эпох; выбранная эпоха 29.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_bpe1024_01",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/hpk3bgbxoxfv3h55loph17qwdh908oog",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 30000,
+      "duration_displayed": "01:40:34",
+      "server_end_time_displayed": "10/18/26 10:16 PM",
+      "note": "Перенос энкодера в BPE, 600 часов. Завершены 30 эпох; выбранная эпоха 29.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_16blocks_90ep_01",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/of2rs4kdm1e064kvrv2y9p52j1x30rtr",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 90000,
+      "duration_displayed": "06:12:38",
+      "server_end_time_displayed": "10/17/26 10:23 AM",
+      "note": "16 блоков, char-CTC, 600 часов. Завершены 90 эпох; выбранная эпоха 88.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_11_lm_decoding_4_gram",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/w61j64qc8g0f6opz85pjdj8t1lrqj84a",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 55000,
+      "duration_displayed": "03:50:09",
+      "server_end_time_displayed": "10/17/26 04:10 AM",
+      "note": "8 блоков, 600 часов, 4-gram. 55 завершённых эпох; KeyboardInterrupt.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_10_lm_decoding_4_gram",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/mcz96ugvivu6ahzowoifv1vylhr7nf5a",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 0,
+      "duration_displayed": "00:01:26",
+      "server_end_time_displayed": "10/17/26 12:14 AM",
+      "note": "80 mel-полос, попытка запуска с 4-gram. OOM, KeyboardInterrupt до первой завершённой эпохи.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_09_lm_decoding",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/37fkk9sstsm9pkye2rm8fx4d0rjin0o9",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 32400,
+      "duration_displayed": "05:04:18",
+      "server_end_time_displayed": "10/17/26 12:12 AM",
+      "note": "Этап подключения LM, 600 часов. 32 завершённые эпохи; лучшая по dev-clean greedy — 31.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_08_libri600h_faster",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/lyz8dpwlk5jv4tmtumqosi7edv2zn6bj",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 20650,
+      "duration_displayed": "01:56:16",
+      "server_end_time_displayed": "10/16/26 07:07 PM",
+      "note": "Следующий запуск на 600 часах. 20 завершённых эпох; KeyboardInterrupt.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_07_libri600h",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/s6o4obi9yvmsbm6f4fi7z8etmd0d0ihx",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 4950,
+      "duration_displayed": "00:45:53",
+      "server_end_time_displayed": "10/16/26 05:11 PM",
+      "note": "Добавлен other-500. Четыре завершённые эпохи; KeyboardInterrupt.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_06_beam_search_faster",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/4xkm8f8moyieszgclogwdczt7exhot6s",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 19950,
+      "duration_displayed": "05:53:24",
+      "server_end_time_displayed": "10/16/26 12:53 AM",
+      "note": "Оптимизация собственного beam. В логе 19 завершённых эпох.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_05_beam_search",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/bwrlyv94yn9rq7eeascolfv4c0azf2mv",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 1950,
+      "duration_displayed": "00:38:40",
+      "server_end_time_displayed": "10/15/26 06:59 PM",
+      "note": "Первое включение собственного beam. Одна завершённая эпоха; KeyboardInterrupt.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_04_rope_v2",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/7nqwj1bdiaxoktii107c8ogltijwijzd",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 23750,
+      "duration_displayed": "01:33:49",
+      "server_end_time_displayed": "10/15/26 06:05 PM",
+      "note": "RoPE, только clean-100. В логе 23 завершённые эпохи.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_03_two_datasets",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/pffsae5qg50x1m8vw90ln2ovnedtip7c",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 15600,
+      "duration_displayed": "01:00:28",
+      "server_end_time_displayed": "10/15/26 04:31 PM",
+      "note": "clean-100 + около 300 часов CV, веса 0.5/0.5. 15 завершённых эпох; KeyboardInterrupt.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_04_two_datasets_and_rope_v2",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/era2s18z34kdtw86hu3bw3av8npnebkh",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 0,
+      "duration_displayed": "00:00:21",
+      "server_end_time_displayed": "10/15/26 04:30 PM",
+      "note": "Повторный запуск смеси с RoPE. OOM, остановка до первой завершённой эпохи.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_04_two_datasets_and_rope",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/ymx0ovqgzejuv048l11e2ql1v42ovyaw",
+      "comet_crashed_badge": false,
+      "current_step_displayed": null,
+      "duration_displayed": "00:00:08",
+      "server_end_time_displayed": "10/15/26 04:21 PM",
+      "note": "Попытка подключить RoPE. Ошибка импорта модели до обучения.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_02_with_augs",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/b2sbj2ke1yy6keovu9eslo19nwjiuudw",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 16950,
+      "duration_displayed": "04:26:21",
+      "server_end_time_displayed": "10/15/26 01:58 AM",
+      "note": "Расширенные wav/spec-аугментации. В логе 16 завершённых эпох.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_big_01",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/fnhb4txlqw58c8dkf14ax8bmkfup2qy8",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 30000,
+      "duration_displayed": "01:56:54",
+      "server_end_time_displayed": "10/14/26 05:33 AM",
+      "note": "8 блоков, d_model=512, clean-100. Завершены 30 эпох; выбранная эпоха 28.",
+      "has_saved_epoch_log": true
+    },
+    {
+      "name": "conformer_exp_1",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/ezkb3zm8us9zxqjgdyjlhqfeagkm4rf7",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 10000,
+      "duration_displayed": "03:03:22",
+      "server_end_time_displayed": "10/14/26 04:19 AM",
+      "note": "4 блока, d_model=128, 4 головы. 50 эпох по 200 шагов; последние dev/test WER 54.47% / 53.71%.",
+      "has_saved_epoch_log": false,
+      "metrics_snapshot": {
+        "epoch": 50,
+        "step": 10000,
+        "val_wer": 0.5446864974191317,
+        "test_wer": 0.537066660222115,
+        "model": {
+          "blocks_amount": 4,
+          "d_model": 128,
+          "num_heads": 4,
+          "n_features": 128
+        },
+        "batch_size": 10,
+        "max_lr": 0.01,
+        "steps_per_epoch": 200,
+        "source": "Comet Output epoch 50 and parameters; Hyperparameters model"
+      }
+    },
+    {
+      "name": "conformer_debug_02",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/upug52pgrf9cjda26ulaicslib43qj3q",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 800,
+      "duration_displayed": "00:02:21",
+      "server_end_time_displayed": "10/14/26 01:15 AM",
+      "note": "Onebatch Conformer: WER/CER 0% на шаге 800; train loss 0.00570845 на шаге 950. Полное обучение не завершено.",
+      "has_saved_epoch_log": false,
+      "metrics_snapshot": {
+        "scope": "onebatchtest, train limit 2 from dev-clean",
+        "val": {
+          "step": 800,
+          "wer": 0.0,
+          "cer": 0.0,
+          "loss": 0.00529873
+        },
+        "train": {
+          "step": 950,
+          "loss": 0.00570845
+        },
+        "source": "Comet Metrics Last; displayed precision"
+      }
+    },
+    {
+      "name": "conformer_debug_01",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/mqxy8b5cpkuj6jznopzk0uje9k6yo3y2",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 650,
+      "duration_displayed": "00:01:42",
+      "server_end_time_displayed": "10/14/26 01:10 AM",
+      "note": "Onebatch Conformer: loss и grad_norm стали nan, WER/CER 100%; остановлен вручную.",
+      "has_saved_epoch_log": false,
+      "metrics_snapshot": {
+        "val_wer": 1.0,
+        "val_cer": 1.0,
+        "train_loss": "nan",
+        "val_loss": "nan",
+        "source": "Comet Output summary"
+      }
+    },
+    {
+      "name": "exp_baseline_02",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/qqpsbxfus1g22fd0eirgp17d2r7qots5",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 2000,
+      "duration_displayed": "00:06:38",
+      "server_end_time_displayed": "10/12/26 07:16 PM",
+      "note": "Baseline на clean-100, остановлен вручную. Последний dev WER 100% на шаге 2000; test WER 100% на шаге 1800.",
+      "has_saved_epoch_log": false,
+      "metrics_snapshot": {
+        "val": {
+          "step": 2000,
+          "wer": 1.0,
+          "cer": 0.952152
+        },
+        "test": {
+          "step": 1800,
+          "wer": 1.0,
+          "cer": 0.952237
+        },
+        "train": {
+          "step": 1950,
+          "loss": 4.62674
+        },
+        "source": "Comet Metrics Last; displayed precision"
+      }
+    },
+    {
+      "name": "exp_baseline_01",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/v0lg1scf0oejf0e6xhach0j49s1qmqx4",
+      "comet_crashed_badge": false,
+      "current_step_displayed": null,
+      "duration_displayed": "00:00:08",
+      "server_end_time_displayed": "10/12/26 06:39 PM",
+      "note": "Загрузка train-clean-100 завершилась SSLEOFError; метрик обучения нет.",
+      "has_saved_epoch_log": false
+    },
+    {
+      "name": "onebatch_08",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/byzkho4f032hrl1wll0851xwjb6szfhy",
+      "comet_crashed_badge": false,
+      "current_step_displayed": 10000,
+      "duration_displayed": "00:03:46",
+      "server_end_time_displayed": "10/12/26 06:32 PM",
+      "note": "Baseline на двух записях, 50 эпох / 10 000 шагов. Последний WER 20.40%, CER 6.44%; это onebatch, не оценка на полном dev-clean.",
+      "has_saved_epoch_log": false,
+      "metrics_snapshot": {
+        "scope": "same two dev-clean utterances used for train and validation",
+        "epoch": 50,
+        "step": 10000,
+        "val_wer": 0.2039695945945946,
+        "val_cer": 0.0643682742128338,
+        "val_loss": 0.23388677835464478,
+        "source": "Comet Output, epoch 50"
+      }
+    },
+    {
+      "name": "onebatch_07",
+      "url": "https://comet.com/konstantin-stakheev/dla-asr-hw/5l0qstrmy0hsnqyhv7rt1d71861qxnfk",
+      "comet_crashed_badge": true,
+      "current_step_displayed": 100,
+      "duration_displayed": "00:00:09",
+      "server_end_time_displayed": "10/12/26 06:25 PM",
+      "note": "Baseline на двух записях; KeyboardInterrupt до первой завершённой эпохи.",
+      "has_saved_epoch_log": false
+    }
+  ]
+}

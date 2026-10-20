@@ -1,5 +1,3 @@
-import warnings
-
 import hydra
 import torch
 from hydra.utils import instantiate
@@ -8,8 +6,6 @@ from src.datasets.data_utils import get_dataloaders
 from src.trainer import Inferencer
 from src.utils.init_utils import set_random_seed
 from src.utils.io_utils import ROOT_PATH
-
-warnings.filterwarnings("ignore", category=UserWarning)
 
 
 @hydra.main(version_base=None, config_path="src/configs", config_name="inference")
@@ -23,35 +19,19 @@ def main(config):
         config (DictConfig): hydra experiment config.
     """
     set_random_seed(config.inferencer.seed)
-
-    if config.inferencer.device == "auto":
+    device = config.inferencer.device
+    if device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
-    else:
-        device = config.inferencer.device
 
-    # setup text_encoder
     text_encoder = instantiate(config.text_encoder)
-
-    # setup data_loader instances
-    # batch_transforms should be put on device
     dataloaders, batch_transforms = get_dataloaders(config, text_encoder, device)
-
-    # build model architecture, then print to console
     model = instantiate(config.model, n_tokens=len(text_encoder)).to(device)
-    print(model)
-
-    # get metrics
-    metrics = {"inference": []}
-    for metric_config in config.metrics.get("inference", []):
-        # use text_encoder in metrics
-        metrics["inference"].append(
-            instantiate(metric_config, text_encoder=text_encoder)
-        )
-
-    # save_path for model predictions
-    save_path = ROOT_PATH / "data" / "saved" / config.inferencer.save_path
-    save_path.mkdir(exist_ok=True, parents=True)
-
+    metrics = {
+        "inference": [
+            instantiate(metric, text_encoder=text_encoder)
+            for metric in config.metrics.get("inference", [])
+        ]
+    }
     inferencer = Inferencer(
         model=model,
         config=config,
@@ -59,17 +39,14 @@ def main(config):
         dataloaders=dataloaders,
         text_encoder=text_encoder,
         batch_transforms=batch_transforms,
-        save_path=save_path,
+        save_path=ROOT_PATH / config.inferencer.save_path,
         metrics=metrics,
-        skip_model_load=False,
     )
-
     logs = inferencer.run_inference()
-
-    for part in logs:
-        for key, value in logs[part].items():
-            full_key = part + "_" + key
-            print(f"    {full_key:15s}: {value}")
+    for part, values in logs.items():
+        for key, value in values.items():
+            print(f"    {part}_{key}: {value}")
+    print(f"Predictions saved to {inferencer.save_path}")
 
 
 if __name__ == "__main__":

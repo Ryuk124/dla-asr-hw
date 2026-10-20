@@ -1,0 +1,122 @@
+{
+  "val_other": {
+    "baseline": {
+      "params": {
+        "alpha": 0.5,
+        "beta": 1.0,
+        "beam_width": 50,
+        "beam_prune_logp": -10.0,
+        "token_min_logp": -5.0
+      },
+      "n": 2864,
+      "word_errors": 6781,
+      "reference_words": 50948,
+      "corpus_wer": 0.13309649053937347,
+      "corpus_cer": 0.06032874378564186
+    },
+    "best": {
+      "params": {
+        "alpha": 0.8,
+        "beta": 1.0,
+        "beam_width": 1000,
+        "beam_prune_logp": -12.0,
+        "token_min_logp": -7.0
+      },
+      "n": 2864,
+      "word_errors": 6302,
+      "reference_words": 50948,
+      "corpus_wer": 0.12369474758577373,
+      "corpus_cer": 0.05723051640892078
+    }
+  },
+  "val": {
+    "baseline": {
+      "params": {
+        "alpha": 0.5,
+        "beta": 1.0,
+        "beam_width": 50,
+        "beam_prune_logp": -10.0,
+        "token_min_logp": -5.0
+      },
+      "n": 2703,
+      "word_errors": 3013,
+      "reference_words": 54402,
+      "corpus_wer": 0.055383993235542814,
+      "corpus_cer": 0.020127655732353575
+    },
+    "best": {
+      "params": {
+        "alpha": 0.8,
+        "beta": 1.0,
+        "beam_width": 1000,
+        "beam_prune_logp": -12.0,
+        "token_min_logp": -7.0
+      },
+      "n": 2703,
+      "word_errors": 2865,
+      "reference_words": 54402,
+      "corpus_wer": 0.05266350501819786,
+      "corpus_cer": 0.019301157791653065
+    }
+  },
+  "test_other": {
+    "baseline": {
+      "params": {
+        "alpha": 0.5,
+        "beta": 1.0,
+        "beam_width": 50,
+        "beam_prune_logp": -10.0,
+        "token_min_logp": -5.0
+      },
+      "n": 2939,
+      "word_errors": 7100,
+      "reference_words": 52343,
+      "corpus_wer": 0.1356437345967942,
+      "corpus_cer": 0.06075073783717229
+    },
+    "best": {
+      "params": {
+        "alpha": 0.8,
+        "beta": 1.0,
+        "beam_width": 1000,
+        "beam_prune_logp": -12.0,
+        "token_min_logp": -7.0
+      },
+      "n": 2939,
+      "word_errors": 6632,
+      "reference_words": 52343,
+      "corpus_wer": 0.1267027109642168,
+      "corpus_cer": 0.05786922180690167
+    }
+  },
+  "test": {
+    "baseline": {
+      "params": {
+        "alpha": 0.5,
+        "beta": 1.0,
+        "beam_width": 50,
+        "beam_prune_logp": -10.0,
+        "token_min_logp": -5.0
+      },
+      "n": 2620,
+      "word_errors": 2938,
+      "reference_words": 52576,
+      "corpus_wer": 0.05588101034692636,
+      "corpus_cer": 0.019588164534887858
+    },
+    "best": {
+      "params": {
+        "alpha": 0.8,
+        "beta": 1.0,
+        "beam_width": 1000,
+        "beam_prune_logp": -12.0,
+        "token_min_logp": -7.0
+      },
+      "n": 2620,
+      "word_errors": 2781,
+      "reference_words": 52576,
+      "corpus_wer": 0.05289485696895922,
+      "corpus_cer": 0.018904856469717353
+    }
+  }
+}

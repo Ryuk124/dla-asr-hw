@@ -4,7 +4,7 @@ defaults:
 text_encoder:
   rescorer:
     _target_: src.text_encoder.lm_rescorer.NBestRescorer
-    model_dir: /storage/k-stakheev-devbox/llm_spec/259_asr_nbest_rescoring/transformer_lm
+    model_dir: data/lm/transformer_lm
     neural_weight: 1.2
     ngram_weight: 0.0
     word_bonus: -0.75

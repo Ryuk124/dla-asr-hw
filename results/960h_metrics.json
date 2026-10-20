@@ -1,0 +1,290 @@
+{
+  "val_other": {
+    "params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 0.0,
+      "neural_weight": 0.8,
+      "word_bonus": 1.25,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "ngram_params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 1.0,
+      "neural_weight": 0.0,
+      "word_bonus": 0.5,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "greedy": {
+      "corpus_cer": 0.07671316520487123,
+      "macro_cer": 0.08359898890729553,
+      "corpus_wer": 0.1711745308942451,
+      "macro_wer": 0.18459272414957376,
+      "legacy_batch_macro_wer": 0.1845927241495738,
+      "word_errors": 8721,
+      "reference_words": 50948,
+      "utterances": 2864
+    },
+    "ngram_reranked": {
+      "corpus_cer": 0.06561683747121325,
+      "macro_cer": 0.07315484322167298,
+      "corpus_wer": 0.11859150506398682,
+      "macro_wer": 0.13107310811789527,
+      "legacy_batch_macro_wer": 0.13107310811789527,
+      "word_errors": 6042,
+      "reference_words": 50948,
+      "utterances": 2864
+    },
+    "first_pass": {
+      "corpus_cer": 0.06724510295386958,
+      "macro_cer": 0.07508285160025925,
+      "corpus_wer": 0.11890555075763523,
+      "macro_wer": 0.1314357023310306,
+      "legacy_batch_macro_wer": 0.1314357023310306,
+      "word_errors": 6058,
+      "reference_words": 50948,
+      "utterances": 2864
+    },
+    "rescored": {
+      "corpus_cer": 0.05836879459355554,
+      "macro_cer": 0.0655377864259091,
+      "corpus_wer": 0.10151527047185366,
+      "macro_wer": 0.11368735787925024,
+      "legacy_batch_macro_wer": 0.11368735787925024,
+      "word_errors": 5172,
+      "reference_words": 50948,
+      "utterances": 2864
+    },
+    "oracle_wer": {
+      "1": 0.11890555075763523,
+      "10": 0.0831828531051268,
+      "25": 0.07541022218732826,
+      "50": 0.07064065321504279,
+      "100": 0.06785349768391301
+    },
+    "hypothesis_counts": {
+      "min": 1,
+      "mean": 61.71263966480447,
+      "max": 100
+    }
+  },
+  "val": {
+    "params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 0.0,
+      "neural_weight": 0.8,
+      "word_bonus": 1.25,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "ngram_params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 1.0,
+      "neural_weight": 0.0,
+      "word_bonus": 0.5,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "greedy": {
+      "corpus_cer": 0.027354303692848362,
+      "macro_cer": 0.03146232573476041,
+      "corpus_wer": 0.07451931914267858,
+      "macro_wer": 0.08549383942729857,
+      "legacy_batch_macro_wer": 0.08549377800646844,
+      "word_errors": 4054,
+      "reference_words": 54402,
+      "utterances": 2703
+    },
+    "ngram_reranked": {
+      "corpus_cer": 0.021082642848709206,
+      "macro_cer": 0.025800638211235127,
+      "corpus_wer": 0.04972243667512224,
+      "macro_wer": 0.060472826916033305,
+      "legacy_batch_macro_wer": 0.06046784396850919,
+      "word_errors": 2705,
+      "reference_words": 54402,
+      "utterances": 2703
+    },
+    "first_pass": {
+      "corpus_cer": 0.021294476354519,
+      "macro_cer": 0.025948693234692344,
+      "corpus_wer": 0.04964890996654535,
+      "macro_wer": 0.06008290647103029,
+      "legacy_batch_macro_wer": 0.06007860369947041,
+      "word_errors": 2701,
+      "reference_words": 54402,
+      "utterances": 2703
+    },
+    "rescored": {
+      "corpus_cer": 0.016835554691243985,
+      "macro_cer": 0.02160535032896553,
+      "corpus_wer": 0.03979633101724201,
+      "macro_wer": 0.05081023899702072,
+      "legacy_batch_macro_wer": 0.050806998459097384,
+      "word_errors": 2165,
+      "reference_words": 54402,
+      "utterances": 2703
+    },
+    "oracle_wer": {
+      "1": 0.04964890996654535,
+      "10": 0.02702106540200728,
+      "25": 0.02339987500459542,
+      "50": 0.02145141722730782,
+      "100": 0.020311753244366015
+    },
+    "hypothesis_counts": {
+      "min": 1,
+      "mean": 37.15649278579356,
+      "max": 100
+    }
+  },
+  "test_other": {
+    "params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 0.0,
+      "neural_weight": 0.8,
+      "word_bonus": 1.25,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "ngram_params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 1.0,
+      "neural_weight": 0.0,
+      "word_bonus": 0.5,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "greedy": {
+      "corpus_cer": 0.07616537843788017,
+      "macro_cer": 0.08655673832490482,
+      "corpus_wer": 0.17263053321361022,
+      "macro_wer": 0.19425468964839668,
+      "legacy_batch_macro_wer": 0.19415018409653506,
+      "word_errors": 9036,
+      "reference_words": 52343,
+      "utterances": 2939
+    },
+    "ngram_reranked": {
+      "corpus_cer": 0.06560226992895446,
+      "macro_cer": 0.0778813647877813,
+      "corpus_wer": 0.12259518942360965,
+      "macro_wer": 0.14518962239568403,
+      "legacy_batch_macro_wer": 0.14510327819679314,
+      "word_errors": 6417,
+      "reference_words": 52343,
+      "utterances": 2939
+    },
+    "first_pass": {
+      "corpus_cer": 0.06668651384340578,
+      "macro_cer": 0.07890197911935339,
+      "corpus_wer": 0.12263339892631298,
+      "macro_wer": 0.14449608056392496,
+      "legacy_batch_macro_wer": 0.14441468004154895,
+      "word_errors": 6419,
+      "reference_words": 52343,
+      "utterances": 2939
+    },
+    "rescored": {
+      "corpus_cer": 0.058086070589791934,
+      "macro_cer": 0.07006196340691745,
+      "corpus_wer": 0.10478956116386146,
+      "macro_wer": 0.12611601579212237,
+      "legacy_batch_macro_wer": 0.1260436111384612,
+      "word_errors": 5485,
+      "reference_words": 52343,
+      "utterances": 2939
+    },
+    "oracle_wer": {
+      "1": 0.12263339892631298,
+      "10": 0.08704124715816823,
+      "25": 0.07882620407695394,
+      "50": 0.07408822574174197,
+      "100": 0.07043921823357469
+    },
+    "hypothesis_counts": {
+      "min": 1,
+      "mean": 62.17182715209255,
+      "max": 100
+    }
+  },
+  "test": {
+    "params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 0.0,
+      "neural_weight": 0.8,
+      "word_bonus": 1.25,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "ngram_params": {
+      "selection_split": "dev-other",
+      "selection_metric": "corpus_wer",
+      "ngram_weight": 1.0,
+      "neural_weight": 0.0,
+      "word_bonus": 0.5,
+      "source_run": "conformer_bpe1024_01",
+      "fixed_for_new_checkpoint": true
+    },
+    "greedy": {
+      "corpus_cer": 0.026456834148320556,
+      "macro_cer": 0.030983240334161062,
+      "corpus_wer": 0.07450167376749847,
+      "macro_wer": 0.08567704946169735,
+      "legacy_batch_macro_wer": 0.08564588683506996,
+      "word_errors": 3917,
+      "reference_words": 52576,
+      "utterances": 2620
+    },
+    "ngram_reranked": {
+      "corpus_cer": 0.021990419451502922,
+      "macro_cer": 0.027890563010276228,
+      "corpus_wer": 0.052628575776019475,
+      "macro_wer": 0.0641177355734465,
+      "legacy_batch_macro_wer": 0.06409256580283222,
+      "word_errors": 2767,
+      "reference_words": 52576,
+      "utterances": 2620
+    },
+    "first_pass": {
+      "corpus_cer": 0.022111421921376866,
+      "macro_cer": 0.028076550232343886,
+      "corpus_wer": 0.052381314668289713,
+      "macro_wer": 0.06381346020948855,
+      "legacy_batch_macro_wer": 0.06379054346369768,
+      "word_errors": 2754,
+      "reference_words": 52576,
+      "utterances": 2620
+    },
+    "rescored": {
+      "corpus_cer": 0.017146761760372404,
+      "macro_cer": 0.02241800662322865,
+      "corpus_wer": 0.041653986609860014,
+      "macro_wer": 0.05260519359844241,
+      "legacy_batch_macro_wer": 0.052586721433620545,
+      "word_errors": 2190,
+      "reference_words": 52576,
+      "utterances": 2620
+    },
+    "oracle_wer": {
+      "1": 0.052381314668289713,
+      "10": 0.02851110772976263,
+      "25": 0.024535909920876446,
+      "50": 0.02274802191113816,
+      "100": 0.021568776628119294
+    },
+    "hypothesis_counts": {
+      "min": 1,
+      "mean": 36.31984732824427,
+      "max": 100
+    }
+  }
+}

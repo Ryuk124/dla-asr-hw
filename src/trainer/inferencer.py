@@ -1,9 +1,10 @@
 import json
+from pathlib import Path
 
 import torch
 from tqdm.auto import tqdm
 
-from src.metrics.beam_search import prepare_beam_predictions
+from src.metrics.beam_search import BeamSearchMetric
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
 
@@ -52,40 +53,39 @@ class Inferencer(BaseTrainer):
                 the model desirable weights are defined outside of the
                 Inferencer Class.
         """
-        assert (
-            skip_model_load or config.inferencer.get("from_pretrained") is not None
-        ), "Provide checkpoint or set skip_model_load=True"
-
         self.config = config
-        self.cfg_trainer = self.config.inferencer
-
+        self.cfg_trainer = config.inferencer
         self.device = device
-
         self.model = model
-        self.batch_transforms = batch_transforms
-
+        self.batch_transforms = batch_transforms or {}
         self.text_encoder = text_encoder
-
-        # define dataloaders
-        self.evaluation_dataloaders = {k: v for k, v in dataloaders.items()}
-
-        # path definition
-
-        self.save_path = save_path
-
-        # define metrics
-        self.metrics = metrics
-        if self.metrics is not None:
-            self.evaluation_metrics = MetricTracker(
-                *[m.name for m in self.metrics["inference"]],
-                writer=None,
-            )
-        else:
-            self.evaluation_metrics = None
-
+        self.evaluation_dataloaders = dataloaders
+        self.save_path = Path(save_path) if save_path is not None else None
+        self.metrics = (metrics or {}).get("inference", [])
+        self.evaluation_metrics = MetricTracker(*[m.name for m in self.metrics])
+        self.decoding = self.cfg_trainer.get("decoding", {})
+        self.method = self.decoding.get("method", "greedy")
+        if self.method not in ("greedy", "beam", "beam_lm", "rescore"):
+            raise ValueError(f"Unknown decoding method: {self.method}")
+        self.decoder = BeamSearchMetric(
+            text_encoder,
+            beam_size=self.decoding.get("beam_size", 100),
+            token_top_k=self.decoding.get("token_top_k"),
+            rescore=self.method == "rescore",
+            nbest_size=self.decoding.get("nbest_size", 100),
+        )
+        if self.decoder.beam_size < 1:
+            raise ValueError("beam_size must be positive")
+        if (
+            self.method == "rescore"
+            and not 1 <= self.decoder.nbest_size <= self.decoder.beam_size
+        ):
+            raise ValueError("Expected 1 <= nbest_size <= beam_size")
         if not skip_model_load:
-            # init model
-            self._from_pretrained(config.inferencer.get("from_pretrained"))
+            checkpoint = self.cfg_trainer.get("from_pretrained")
+            if checkpoint is None:
+                raise ValueError("Provide inferencer.from_pretrained")
+            self._from_pretrained(checkpoint)
 
     def run_inference(self):
         """
@@ -95,11 +95,26 @@ class Inferencer(BaseTrainer):
             part_logs (dict): part_logs[part_name] contains logs
                 for the part_name partition.
         """
-        part_logs = {}
-        for part, dataloader in self.evaluation_dataloaders.items():
-            logs = self._inference_part(part, dataloader)
-            part_logs[part] = logs
-        return part_logs
+        return {
+            part: self._inference_part(part, dataloader)
+            for part, dataloader in self.evaluation_dataloaders.items()
+        }
+
+    def _decode(self, log_probs, lengths, greedy):
+        if self.method == "greedy":
+            return greedy, {}
+        if self.method == "beam":
+            predictions = [
+                self.text_encoder.beam_search(
+                    sample[:length],
+                    beam_size=self.decoder.beam_size,
+                    token_top_k=self.decoder.token_top_k,
+                )
+                for sample, length in zip(log_probs, lengths.tolist())
+            ]
+            return predictions, {}
+        predictions = self.decoder.get_predictions(log_probs, lengths)
+        return predictions, {self.decoder.decoding_key: predictions}
 
     def process_batch(self, batch_idx, batch, metrics, part):
         """
@@ -124,39 +139,66 @@ class Inferencer(BaseTrainer):
                 and model outputs.
         """
         batch = self.move_batch_to_device(batch)
-        batch = self.transform_batch(batch)  # transform batch on device -- faster
-
-        outputs = self.model(**batch)
-        batch.update(outputs)
-
-        if metrics is not None:
-            prepare_beam_predictions(batch, self.metrics["inference"])
-            for met in self.metrics["inference"]:
-                metrics.update(met.name, met(**batch))
+        batch = self.transform_batch(batch)
+        batch.update(self.model(**batch))
+        log_probs = batch["log_probs"].detach().float().cpu()
+        lengths = batch["log_probs_length"].detach().cpu()
+        greedy = [
+            self.text_encoder.ctc_decode(tokens[:length])
+            for tokens, length in zip(log_probs.argmax(-1).tolist(), lengths.tolist())
+        ]
+        predictions, decoded = self._decode(log_probs, lengths, greedy)
+        has_transcription = batch.get("has_transcription", [True] * len(predictions))
+        indices = [i for i, present in enumerate(has_transcription) if present]
+        if indices and self.metrics and metrics is not None:
+            labeled = {
+                "log_probs": log_probs[indices],
+                "log_probs_length": lengths[indices],
+                "text": [batch["text"][i] for i in indices],
+                "beam_predictions": {
+                    key: [texts[i] for i in indices] for key, texts in decoded.items()
+                },
+            }
+            for metric in self.metrics:
+                if isinstance(metric, BeamSearchMetric):
+                    labeled["beam_predictions"][metric.decoding_key] = (
+                        metric.get_predictions(
+                            labeled["log_probs"],
+                            labeled["log_probs_length"],
+                            labeled["beam_predictions"],
+                        )
+                    )
+                metrics.update(metric.name, metric(**labeled), n=len(indices))
+            self.labeled_count += len(indices)
 
         if self.save_path is not None:
-            lengths = batch["log_probs_length"].cpu().tolist()
-            tokens = batch["log_probs"].argmax(-1).cpu().tolist()
-            with (self.save_path / part / "predictions.jsonl").open("a") as handle:
-                for i, length in enumerate(lengths):
+            output_dir = self.save_path / part
+            with (output_dir / "predictions.jsonl").open(
+                "a", encoding="utf-8"
+            ) as handle:
+                for i, prediction in enumerate(predictions):
+                    utterance_id = Path(batch["audio_path"][i]).stem
+                    with (output_dir / f"{utterance_id}.txt").open(
+                        "x", encoding="utf-8"
+                    ) as text_file:
+                        text_file.write(prediction + "\n")
                     output = {
+                        "id": utterance_id,
                         "audio_path": str(batch["audio_path"][i]),
-                        "reference": batch["text"][i],
-                        "greedy": self.text_encoder.ctc_decode(tokens[i][:length]),
+                        "reference": batch["text"][i] if has_transcription[i] else None,
+                        "prediction": prediction,
+                        "greedy": greedy[i],
                         "beam_predictions": [
                             {
                                 "beam_size": key[0],
                                 "rescore": key[2],
                                 "nbest_size": key[3],
-                                "text": predictions[i],
+                                "text": texts[i],
                             }
-                            for key, predictions in batch.get(
-                                "beam_predictions", {}
-                            ).items()
+                            for key, texts in decoded.items()
                         ],
                     }
-                    handle.write(json.dumps(output) + "\n")
-
+                    handle.write(json.dumps(output, ensure_ascii=False) + "\n")
         return batch
 
     def _inference_part(self, part, dataloader):
@@ -169,28 +211,18 @@ class Inferencer(BaseTrainer):
         Returns:
             logs (dict): metrics, calculated on the partition.
         """
-
         self.is_train = False
         self.model.eval()
-
         self.evaluation_metrics.reset()
-
-        # create Save dir
+        self.labeled_count = 0
         if self.save_path is not None:
-            (self.save_path / part).mkdir(exist_ok=True, parents=True)
-            (self.save_path / part / "predictions.jsonl").write_text("")
+            output_dir = self.save_path / part
+            output_dir.mkdir(exist_ok=True, parents=True)
+            if any(output_dir.iterdir()):
+                raise FileExistsError(f"Output directory is not empty: {output_dir}")
+            (output_dir / "predictions.jsonl").touch()
 
         with torch.no_grad():
-            for batch_idx, batch in tqdm(
-                enumerate(dataloader),
-                desc=part,
-                total=len(dataloader),
-            ):
-                batch = self.process_batch(
-                    batch_idx=batch_idx,
-                    batch=batch,
-                    part=part,
-                    metrics=self.evaluation_metrics,
-                )
-
-        return self.evaluation_metrics.result()
+            for batch_idx, batch in enumerate(tqdm(dataloader, desc=part)):
+                self.process_batch(batch_idx, batch, self.evaluation_metrics, part)
+        return self.evaluation_metrics.result() if self.labeled_count else {}

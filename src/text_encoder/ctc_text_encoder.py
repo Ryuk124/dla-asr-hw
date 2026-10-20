@@ -26,8 +26,7 @@ class CTCTextEncoder:
         Args:
             alphabet (list): alphabet for language. If None, it will be
                 set to ascii.
-            lm_path (str | None): KenLM model path. Defaults to the shared
-                LibriSpeech 4-gram model.
+            lm_path (str | None): KenLM model path. Defaults to data/lm/4-gram.arpa.
             lm_alpha (float): Language model score weight.
             lm_beta (float): Word insertion bonus.
             beam_prune_logp (float): Beam score pruning threshold.
@@ -48,15 +47,7 @@ class CTCTextEncoder:
 
         self.lm_decoder = build_ctcdecoder(
             labels=labels,
-            kenlm_model_path=(
-                lm_path
-                or (
-                    "/storage/lam-tts-resources-2/experiments/VTTS-4688/"
-                    "librispeech_lm/4-gram.arpa"
-                )
-            )
-            if use_lm
-            else None,
+            kenlm_model_path=(lm_path or "data/lm/4-gram.arpa") if use_lm else None,
             alpha=lm_alpha,
             beta=lm_beta,
         )

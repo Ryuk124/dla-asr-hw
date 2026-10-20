@@ -1,0 +1,166 @@
+[
+  {
+    "file": "assets/report/onebatch_wer.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/byzkho4f032hrl1wll0851xwjb6szfhy",
+    "metric": "WER_(Argmax)_val",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": "fraction",
+    "sha256": "24cff6a8f995addd3befa4b013fac27233ce3c16db27a1866ef03d53c0ab9c5e",
+    "included_in_report": false
+  },
+  {
+    "file": "assets/report/onebatch_loss.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/byzkho4f032hrl1wll0851xwjb6szfhy",
+    "metric": "loss_val",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": null,
+    "sha256": "73a7505272511ed6ae90fee5c78d78c987b3859222f3fbb0cf01bcf30d0f7088",
+    "included_in_report": false
+  },
+  {
+    "file": "assets/report/debug_wer.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/upug52pgrf9cjda26ulaicslib43qj3q",
+    "metric": "WER_(Argmax)_val",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": "fraction",
+    "sha256": "da2d4fd3d1c8d50f6d934cfebffafd5cd2e45dd1c4166c37da3b940effaaa722"
+  },
+  {
+    "file": "assets/report/small_conformer_wer.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/ezkb3zm8us9zxqjgdyjlhqfeagkm4rf7",
+    "metric": "WER_(Argmax)_val",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": "fraction",
+    "sha256": "a20a3f151b3d707bbd629b217ac3fddeb04483324a0ad5d659d737d5642da14a"
+  },
+  {
+    "file": "assets/report/char90_dev_other_comet.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/of2rs4kdm1e064kvrv2y9p52j1x30rtr",
+    "metric": "WER_(Argmax)_val_other",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": "fraction",
+    "sha256": "db865f4c26c719e959780a10d854d8544f6467c9a0dbd4c34dfcfcb48d74806b"
+  },
+  {
+    "file": "assets/report/bpe960_dev_other_comet.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/k514yjd81hafadiwj9jx0qq1wvepn96j",
+    "metric": "WER_(Argmax)_val_other",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": "fraction",
+    "sha256": "a30d0db26730986d766e94301e03a1f09eb90a0ad0c6e64a14613765adbf5a36"
+  },
+  {
+    "file": "assets/report/lm_dev_other_comet.png",
+    "kind": "Comet fullscreen panel screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/w61j64qc8g0f6opz85pjdj8t1lrqj84a",
+    "metric": "WER_(BeamLM)_val_other",
+    "x_axis": "step",
+    "smoothing": 0,
+    "captured": "2026-10-20",
+    "wer_unit": "fraction",
+    "sha256": "c932606a833d55724e4a27e2bc8b3a5b31ae30dd53eda9b8be2188a090fe01b7"
+  },
+  {
+    "file": "assets/report/early_comparison.png",
+    "kind": "Plot of saved epoch metrics",
+    "source": "results/report_runs.json",
+    "smoothing": 0,
+    "wer_unit": "percent",
+    "note": "Legacy training-log WER, not corpus WER",
+    "sha256": "28b12b825344e8b59ac2ef55c86d86d8106db66c10ba4147458752041936b0a1"
+  },
+  {
+    "file": "assets/report/lm_training_comparison.png",
+    "kind": "Plot of saved epoch metrics",
+    "source": "results/report_runs.json",
+    "smoothing": 0,
+    "wer_unit": "percent",
+    "note": "Legacy training-log WER, not corpus WER",
+    "sha256": "73478968c9d2360b1c703761bad88d730822791aaa932e8bc600e5e0d4fef106"
+  },
+  {
+    "file": "assets/report/char_training.png",
+    "kind": "Plot of saved epoch metrics",
+    "source": "results/report_runs.json",
+    "smoothing": 0,
+    "wer_unit": "percent",
+    "note": "Legacy training-log WER, not corpus WER",
+    "sha256": "7991f138c9a117ac66ad84b5188d96fb5c305e02d1b94fd35bec696e010c3bd5"
+  },
+  {
+    "file": "assets/report/bpe_training.png",
+    "kind": "Plot of saved epoch metrics",
+    "source": "results/report_runs.json",
+    "smoothing": 0,
+    "wer_unit": "percent",
+    "note": "Legacy training-log WER, not corpus WER",
+    "sha256": "1dbe3b475d45a8f564d4685ba8f24e9428e1479e7e7d9ecac1cf09e92309bab8"
+  },
+  {
+    "file": "assets/report/decoder_comparison.png",
+    "kind": "Corpus WER bar chart",
+    "source": "results/decoder_comparison.json",
+    "checkpoint": "bpe_960h_epoch29",
+    "wer_unit": "percent",
+    "sha256": "5c01efd6167f318d49fb81a7b60cefae491bdeb736e41f51090a192282d53ab6"
+  },
+  {
+    "file": "assets/report/features.png",
+    "kind": "Feature illustration generated from real audio using project transforms",
+    "utterance": "LibriSpeech dev-clean/1272/128104/1272-128104-0000.flac",
+    "source": [
+      "src/transforms/logmel.py",
+      "src/transforms/spec_augs",
+      "src/configs/transforms/instance_transforms/example.yaml"
+    ],
+    "seed": 42,
+    "waveform_augmentations": false,
+    "sha256": "d51576cf1acc39b470c64c132fc90b4cd7c5889084e3740113dd730042774c4f"
+  },
+  {
+    "file": "assets/report/baseline_wer.png",
+    "kind": "User-provided Comet screenshot",
+    "source": "https://www.comet.com/konstantin-stakheev/dla-asr-hw/qqpsbxfus1g22fd0eirgp17d2r7qots5",
+    "metric": "WER_(Argmax)_val",
+    "x_axis": "step",
+    "wer_unit": "fraction",
+    "included_in_report": true,
+    "sha256": "bf4469b24ca147ae9262a4bf04d7f55fb37ef18258776b663471ef3c40024a61"
+  },
+  {
+    "file": "assets/report/big01_metrics.png",
+    "kind": "Plot of saved epoch metrics",
+    "source": "results/report_runs.json",
+    "run": "conformer_big_01",
+    "metrics": [
+      "val_WER_(Argmax)",
+      "test_WER_(Argmax)",
+      "val_CER_(Argmax)",
+      "test_CER_(Argmax)"
+    ],
+    "selected_epoch": 28,
+    "selection_metric": "val_WER_(Argmax)",
+    "unit": "percent",
+    "smoothing": 0,
+    "note": "Legacy training-log averages, not corpus metrics",
+    "sha256": "7cea80c0c9f7b3797d1b2f267da502769d3a6fc2b3828ac2c52fef08612989b6"
+  }
+]

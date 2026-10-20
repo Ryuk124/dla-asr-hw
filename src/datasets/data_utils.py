@@ -1,7 +1,7 @@
 from itertools import repeat
 
-from hydra.utils import instantiate
 import torch
+from hydra.utils import instantiate
 from torch.utils.data import WeightedRandomSampler
 
 from src.datasets.collate import collate_fn
@@ -83,20 +83,21 @@ def get_dataloaders(config, text_encoder, device):
             dataset = torch.utils.data.ConcatDataset(datasets)
 
             sampler = WeightedRandomSampler(
-                    weights=weights,
-                    num_samples=len(dataset),
-                    replacement=True,
+                weights=weights,
+                num_samples=len(dataset),
+                replacement=True,
             )
         else:
             # dataset partition init
             dataset = instantiate(
                 config.datasets[dataset_partition], text_encoder=text_encoder
             )  # instance transforms are defined inside
-            
-        assert config.dataloader.batch_size <= len(dataset), (
-            f"The batch size ({config.dataloader.batch_size}) cannot "
-            f"be larger than the dataset length ({len(dataset)})"
-        )
+
+        if dataset_partition == "train":
+            assert config.dataloader.batch_size <= len(dataset), (
+                f"The batch size ({config.dataloader.batch_size}) cannot "
+                f"be larger than the dataset length ({len(dataset)})"
+            )
 
         partition_dataloader = instantiate(
             config.dataloader,
@@ -105,7 +106,7 @@ def get_dataloaders(config, text_encoder, device):
             drop_last=(dataset_partition == "train"),
             shuffle=(dataset_partition == "train" and sampler is None),
             worker_init_fn=set_worker_seed,
-            sampler = sampler,
+            sampler=sampler,
         )
         dataloaders[dataset_partition] = partition_dataloader
 

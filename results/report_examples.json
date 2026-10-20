@@ -1,0 +1,34 @@
+{
+  "source": "Final BPE 960h / epoch 29 saved dev-other predictions",
+  "selection": "Manually selected qualitative examples, not a random evaluation sample",
+  "examples": [
+    {
+      "id": "5849-50873-0028",
+      "reference": "boy have a care how you approach me",
+      "greedy": "boys have a care how youroached me",
+      "first_pass": "boys have a care how you approach me",
+      "rescored": "boy have a care how you approach me"
+    },
+    {
+      "id": "7697-105817-0005",
+      "reference": "so they set off through the field",
+      "greedy": "so they sat off through the field",
+      "first_pass": "so they set off through the field",
+      "rescored": "so they set off through the field"
+    },
+    {
+      "id": "4831-29134-0015",
+      "reference": "it was senator of the united states",
+      "greedy": "it was sentnditor of the united states",
+      "first_pass": "it was senator of the united states",
+      "rescored": "it was a senator of the united states"
+    },
+    {
+      "id": "4831-25894-0017",
+      "reference": "how gay the streets were that day",
+      "greedy": "how gave the streets where that day",
+      "first_pass": "how gave the streets where that day",
+      "rescored": "how gave the streets where that day"
+    }
+  ]
+}

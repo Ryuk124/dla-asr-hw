@@ -9,7 +9,6 @@ train:
       dataset:
         _target_: src.datasets.LibrispeechDataset
         part: "train-other-500"
-        data_dir: /storage/lam-tts-resources-2/experiments/VTTS-4688/librispeech_train_other_500/LibriSpeech
         instance_transforms: ${transforms.instance_transforms.train}
 val:
   _target_: src.datasets.LibrispeechDataset

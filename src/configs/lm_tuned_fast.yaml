@@ -2,7 +2,7 @@ defaults:
 - baseline
 - _self_
 text_encoder:
-  lm_path: /storage/lam-tts-resources-2/experiments/VTTS-4688/librispeech_lm/4-gram.arpa
+  lm_path: data/lm/4-gram.arpa
   lm_alpha: 0.8
   lm_beta: 2.0
   beam_prune_logp: -10.0
